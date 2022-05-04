@@ -1,9 +1,9 @@
 var config = {
-    host: '127.0.0.1',
-    user: 'root',
-    password: 'root',
-    database: 'DASHWTW',
-    port: 8889
+    host: process.env.HOST,
+    user: process.env.USER_db,
+    password: process.env.PASS,
+    database: process.env.NAME_db,
+    port: process.env.PORT_db
 }
 
 module.exports = config;
