@@ -16,7 +16,7 @@ var usuario = require('./routes/usuario')
 
 
 app.use(express.json());
-app.use('/user',usuario)
+app.use('/mappers',usuario)
 
 app.get('/', (req, res) => {
     res.send('Hello World!')

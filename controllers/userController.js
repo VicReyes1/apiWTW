@@ -14,12 +14,7 @@ module.exports.List = (request, response) =>{
         if (error) 
             response.send(error)
         console.log(rows)
-        const payload = {
-            USER: {
-                EMAIL: rows[0].EMAIL,
-                FNAME: rows[0].FNAME
-            },
-        }
-        response.json(payload)
+        
+        response.json(rows)
     })
 }
