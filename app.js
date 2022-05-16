@@ -12,11 +12,13 @@ app.set('view engine','ejs')
 
 //Rutas
 var usuario = require('./routes/usuario')
+var maps = require('./routes/map')
 
 
 
 app.use(express.json());
 app.use('/mappers',usuario)
+app.use('/maps',maps)
 
 app.get('/', (req, res) => {
     res.send('Hello World!')
