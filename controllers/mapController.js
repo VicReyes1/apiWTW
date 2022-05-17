@@ -1,4 +1,5 @@
 const { response } = require('express');
+const { request } = require('http');
 const mysql = require ('mysql');
 const config = require('../helpers/config.js')
 const connection = mysql.createConnection(config);
@@ -46,7 +47,7 @@ module.exports.Over = (request, response) =>{
                     "Building Entrance",
                     "Food Service Area"
                 ],
-                avgTimeCompletionPerMap: Math.round(rows[6][0].days)
+                avgTimeCompletionPerMap: Math.round(rows[6][0].days),
 
             },
 
@@ -55,3 +56,25 @@ module.exports.Over = (request, response) =>{
     })
 }
 
+module.exports.Table = (request,response) =>{
+    const sql = 'select NAME,country_name,CITY from ams_dashboard_accommodations;'
+
+    connection.query(sql, (error, rows) =>{
+        if (error) 
+            response.send(error)
+        
+        let places = [{}]
+        for (let x = 0; x < rows.length; x++) {
+            places[x] = {
+                name: rows[x].NAME,
+                location:{
+                    city: rows[x].CITY,
+                    country: rows[x].country_name
+                },
+                progress:25
+            }
+        }
+        console.log()
+        response.json(places)
+    })
+}
