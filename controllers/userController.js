@@ -10,7 +10,7 @@ connection.connect((error) => {
 
 //MAPPERS OVERVIEW
 module.exports.List = (request, response) => {
-  var sql = `SELECT FNAME,LNAME,PHOTOURL, COUNT(REPLIES.COMPLETED_AT) AS MAPS_DONE, COUNT(REPLIES.CREATED_AT) AS MAPS_PROGRESS, EMAIL
+  var sql = `SELECT USERS.ID,FNAME,LNAME,PHOTOURL, COUNT(REPLIES.COMPLETED_AT) AS MAPS_DONE, COUNT(REPLIES.CREATED_AT) AS MAPS_PROGRESS, EMAIL
             FROM USERS JOIN ACCOMMODATIONS
             ON USERS.ID = ACCOMMODATIONS.USER_ID 
             JOIN REPLIES on REPLIES.ACCOMMODATION_ID=ACCOMMODATIONS.ID
@@ -21,6 +21,7 @@ module.exports.List = (request, response) => {
     for (let x = 0; x < rows.length; x++) {
       obj[x] = {
         name: {
+          id: rows[x].ID,
           name: rows[x].FNAME,
           lname: rows[x].LNAME,
           photo: rows[x].PHOTOURL,
@@ -38,15 +39,17 @@ module.exports.List = (request, response) => {
 
 //MAPPERS CONTRIBUTIONS TABLE ***falta verificar "all ","completed" ,"non completed" ***
 module.exports.Table = (request, response) => {
+  var userId = request.params.id
+
   var a = `select distinct NAME,a.CITY,a.COUNTRY
             from USERS u join ACCOMMODATIONS a on u.ID=a.USER_ID
             join REPLIES r on r.ACCOMMODATION_ID=a.ID
-            where u.ID=1 order by(a.CITY)`;
+            where u.ID=${userId} order by(a.CITY)`;
 
   var b = `select distinct NAME,a.CITY,a.COUNTRY
             from USERS u join ACCOMMODATIONS a on u.ID=a.USER_ID
             join REPLIES r on r.ACCOMMODATION_ID=a.ID
-            where u.ID=1 order by(a.NAME)`;
+            where u.ID=${userId} order by(a.NAME)`;
   var sql;
 
   request.query == a ? (sql = a) : (sql = b);
@@ -70,6 +73,7 @@ module.exports.Table = (request, response) => {
 
 //MAPPER DETAILS **implementar params
 module.exports.Details = (request, response) => {
+  var userId = request.params.id
   var sql = `select FNAME,LNAME,r.UPDATED_AT,a.CREATED_AT,INQUIRY_ID,a.NAME,ADDRESS,a.COUNTRY,a.CITY,SUBTYPE
   from USERS u join ACCOMMODATIONS a on u.ID=a.USER_ID
   join REPLIES r on r.ACCOMMODATION_ID=a.ID
