@@ -1,4 +1,5 @@
 const { response } = require('express');
+const { request } = require('http');
 const mysql = require ('mysql');
 const config = require('../helpers/config.js')
 const connection = mysql.createConnection(config);
@@ -9,36 +10,71 @@ connection.connect(error => {
 
 module.exports.Over = (request, response) =>{
 
-    var sql = 'select count(*) as completedMaps from ACCOMMODATIONS where COMPLETED_AT  is not null; select count(*) as mapsInProgress from ACCOMMODATIONS where COMPLETED_AT is null; select COUNTRY,count(NAME) as cantidad from ACCOMMODATIONS where COMPLETED_AT is not null group by(COUNTRY);select COUNTRY,count(NAME) as cantidad from ACCOMMODATIONS where COMPLETED_AT is null group by(COUNTRY);select COUNTRY,count(NAME) as cantidad from ACCOMMODATIONS where COMPLETED_AT is not null group by(COUNTRY) order by cantidad limit 10; select sum(day(COMPLETED_AT) - day(CREATED_AT))/count(*) as days from ACCOMMODATIONS where COMPLETED_AT is not null'
+    const consul1 = 'select count(*) as cantidad from ams_dashboard_accommodations as completados where COMPLETED_AT is not null;'
+
+    const consul2 = 'select count(*) as cantidad from ams_dashboard_accommodations as noCompletados where COMPLETED_AT is null;'
+
+    const consul3 = 'select country_name,count(NAME) as cantidad from ams_dashboard_accommodations where COMPLETED_AT is not null group by(country_name);'
+
+    const consul4 = 'select country_name,count(NAME) as cantidad from ams_dashboard_accommodations where COMPLETED_AT is not null group by(country_name) order by cantidad DESC limit 10;'
+
+    const consul5 = 'select count (distinct country_name) as paisesC from ams_dashboard_accommodations; '
+
+    const consul6 = 'select count (distinct city) as ciudadesC from ams_dashboard_accommodations;'
+
+    const consul9 = 'select sum(TIMESTAMPDIFF(DAY,CREATED_AT,COMPLETED_AT))/count(*) as days from ams_dashboard_accommodations where COMPLETED_AT is not null;'
+    
+
+    var sql = `${consul1} ${consul2} ${consul3} ${consul4} ${consul5} ${consul6} ${consul9}`;
+
     connection.query(sql, (error, rows) =>{
         if (error) 
             response.send(error)
-        var weeklySummary= {
-            weeklySummary: {
-                completedMaps: rows[0][0].completedMaps,
-                mapsInProgress: rows[1][0].mapsInProgress
-            }
-        }
-        
-        var worldwideInsights = {
-            worldwideInsights:{
-                map: rows[2],
-                mapN: rows[3]
-            }
-        }
+        var obj= {
+            summary: {
+                completedMaps: rows[0][0].cantidad,
+                mapsInProgress: rows[1][0].cantidad
+            },
+            allTimeStatistics: {
+                worldwideInsights: rows[2],
+                highlights: rows[3],
+                presence: {
+                    countryNumber: rows[4][0].paisesC,
+                    destinationNumber: rows[5][0].ciudadesC
+                },
+                avgNumberOfPhotos: 5,
+                leastMappedAreas: [
+                    "Building Entrance",
+                    "Food Service Area"
+                ],
+                avgTimeCompletionPerMap: Math.round(rows[6][0].days),
 
-        var highlights = {
-            highlights:rows[4]
+            },
+
         }
-        var avgTimeCompletionPerMap = {
-            avgTimeCompletionPerMap:{
-                days: rows[5][0].days
-            }
-        }
-        
-        var finalObject = Object.assign(weeklySummary,worldwideInsights,highlights,avgTimeCompletionPerMap)
-        
-        response.json(finalObject)
+        response.json(obj)
     })
 }
 
+module.exports.Table = (request,response) =>{
+    const sql = 'select NAME,country_name,CITY from ams_dashboard_accommodations;'
+
+    connection.query(sql, (error, rows) =>{
+        if (error) 
+            response.send(error)
+        
+        let places = [{}]
+        for (let x = 0; x < rows.length; x++) {
+            places[x] = {
+                name: rows[x].NAME,
+                location:{
+                    city: rows[x].CITY,
+                    country: rows[x].country_name
+                },
+                progress:25
+            }
+        }
+        console.log()
+        response.json(places)
+    })
+}
