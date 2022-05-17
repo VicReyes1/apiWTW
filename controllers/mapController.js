@@ -74,7 +74,49 @@ module.exports.Table = (request,response) =>{
                 progress:25
             }
         }
-        console.log()
         response.json(places)
+    })
+}
+
+module.exports.Detail = (request,response) => {
+    const sql = 'select FNAME,LNAME,r.UPDATED_AT,a.CREATED_AT, INQUIRY_ID,ADDRESS,a.country_name,a.CITY,a.CREATED_AT,SUBTYPE from ams_dashboard_users u join ams_dashboard_accommodations a on u.ID=a.USER_UID join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid where a.ID=1 order by(r.UPDATED_AT) limit 1;'
+    connection.query(sql, (error, rows) =>{
+        if (error) 
+            response.send(error)
+        var obj = {
+            
+                mapper:{
+                    name:rows[0].FNAME,
+                },
+                accomodation:{
+                    type: rows[0].SUBTYPE,
+                    address: rows[0].ADDRESS,
+
+                },
+                progress: {
+                    completedpercentage: 68,
+                    created: rows[0].CREATED_AT,
+                    duration: 6,
+                    lastUpdate: rows[0].UPDATED_AT
+
+                },
+                progressAreas: [
+                    {
+                        name: "Building entrance",
+                        percentage: 100
+                    },
+                    {
+                        name: "Food service",
+                        percentage: 70
+                    },
+                    {
+                        name: "Looby",
+                        percentage: 50
+                    },
+                ]
+            }
+            
+    
+        response.json(obj)
     })
 }
