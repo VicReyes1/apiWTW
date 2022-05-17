@@ -9,10 +9,12 @@ connection.connect(error => {
 });
 
 module.exports.Over = (request, response) =>{
+    var initialDate = request.params.initialDate
+    var finishDate = request.params.finishDate
+    
+    const consul1 = `select count(*) as cantidad from ams_dashboard_accommodations as completados where COMPLETED_AT is not null and COMPLETED_AT >= '${initialDate}' and completed_at <= '${finishDate} 23:59:59';`
 
-    const consul1 = 'select count(*) as cantidad from ams_dashboard_accommodations as completados where COMPLETED_AT is not null;'
-
-    const consul2 = 'select count(*) as cantidad from ams_dashboard_accommodations as noCompletados where COMPLETED_AT is null;'
+    const consul2 = `select count(*) as cantidad from ams_dashboard_accommodations as noCompletados where COMPLETED_AT is null or COMPLETED_AT >= '${initialDate}' and completed_at <= '${finishDate} 23:59:59';`
 
     const consul3 = 'select country_name,count(NAME) as cantidad from ams_dashboard_accommodations where COMPLETED_AT is not null group by(country_name);'
 
@@ -57,7 +59,10 @@ module.exports.Over = (request, response) =>{
 }
 
 module.exports.Table = (request,response) =>{
-    const sql = 'select NAME,country_name,CITY from ams_dashboard_accommodations;'
+    var initialDate = request.params.initialDate
+    var finishDate = request.params.finishDate
+
+    const sql = `select NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59';`
 
     connection.query(sql, (error, rows) =>{
         if (error) 
