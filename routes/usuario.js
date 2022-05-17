@@ -5,6 +5,6 @@ var controller = require('../controllers/userController')
 
 router.get('/overview',controller.List)
 router.get('/contributions/:id',controller.Table)
-router.get('/details',controller.Details)
+router.get('/details/:id',controller.Details)
 
 module.exports = router;
