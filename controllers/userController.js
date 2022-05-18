@@ -61,11 +61,12 @@ module.exports.Table = (request, response) => {
 
     for (let x = 0; x < rows.length; x++) {
       obj[x] = {
-        name: rows[x].name,
-        location: {
-          city: rows[x].CITY,
-          country: rows[x].country_name,
-        },
+        placeName: rows[x].name,
+        city: `${rows[x].CITY}, ${rows[x].country_name}`,
+        // location: {
+        //   city: rows[x].CITY,
+        //   country: rows[x].country_name,
+        // },
         progress: "", //implementar progreso
       };
     }
@@ -94,9 +95,9 @@ module.exports.Details = (request, response) => {
     connection.query(sql, (error, rows) => {
       if (error) response.send(error);
 
-      let obj = [{}];
+      let obj = {};
       for (let x = 0; x < rows.length; x++) {
-        obj[x] = {
+        obj = {
           name: {
             name: rows1[x].FNAME,
             lname: rows1[x].LNAME,
@@ -104,7 +105,7 @@ module.exports.Details = (request, response) => {
           },
           contributions: {
             total: rows1[x].completed,
-            WTWcontributions: "",
+            WTWcontributions: "Pending",
             inprogress: rows1[x].inProgress,
             averageTime: rows1[x].days,
           },
