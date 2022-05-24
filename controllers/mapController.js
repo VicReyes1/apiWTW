@@ -71,12 +71,9 @@ module.exports.Table = (request,response) =>{
         let places = [{}]
         for (let x = 0; x < rows.length; x++) {
             places[x] = {
-                name: rows[x].NAME,
-                location:{
-                    city: rows[x].CITY,
-                    country: rows[x].country_name
-                },
-                progress:25
+                placeName: rows[x].NAME,
+                city: `${rows[x].CITY}, ${rows[x].country_name}`,
+                progress: 0
             }
         }
         response.json(places)
