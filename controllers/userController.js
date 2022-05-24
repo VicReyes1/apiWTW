@@ -63,11 +63,7 @@ module.exports.Table = (request, response) => {
       obj[x] = {
         placeName: rows[x].name,
         city: `${rows[x].CITY}, ${rows[x].country_name}`,
-        // location: {
-        //   city: rows[x].CITY,
-        //   country: rows[x].country_name,
-        // },
-        progress: "", //implementar progreso
+        progress: 0, //implementar progreso
       };
     }
     response.json(obj);
