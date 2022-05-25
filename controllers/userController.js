@@ -44,10 +44,12 @@ module.exports.List = (request, response) => {
 module.exports.Table = (request, response) => {
   var userId = request.params.id;
 
-  var sql = `select distinct u.ID, a.name, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+  var sql = `
+  select distinct a.ID as ACC_ID, u.ID, a.name, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
   from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
   join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-  where u.ID=${userId} order by(r.UPDATED_AT)`;
+  where u.ID=${userId} order by(r.UPDATED_AT)
+  `;
 
   /*
   var b = `select distinct NAME,a.CITY,a.country_name
@@ -61,11 +63,10 @@ module.exports.Table = (request, response) => {
     if (error) response.send(error);
 
     let obj = [{}];
-
     for (let x = 0; x < rows.length; x++) {
       obj[x] = {
-        id: rows[x].ID,
-        placeName: rows[x].name,
+        id: rows[x].ACC_ID,
+        placeName: rows[x].NAME,
         city: `${rows[x].CITY}, ${rows[x].country_name}`,
         progress: 0, //implementar progreso
       };
@@ -102,7 +103,7 @@ module.exports.Details = (request, response) => {
 
       for (let x = 0; x < rows.length; x++) {
         var date = rows[x].CREATED_AT.toISOString();
-      
+
         var YYYY = date.split("-")[0];
         var MM = date.split("-")[1];
         var D = date.split("-")[2];
