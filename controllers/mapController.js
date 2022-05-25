@@ -35,10 +35,11 @@ module.exports.Over = (request, response) =>{
         if (error) 
             response.send(error)
         var newDates = []
+
         for (let i = rows[8].length - 1; i >= 0; i--) {
             newDates.push(rows[8][i])
         }
-        console.log(newDates)
+
         var obj= {
             summary: {
                 completedMaps: rows[0][0].cantidad,
@@ -69,7 +70,7 @@ module.exports.Table = (request,response) =>{
     var initialDate = request.params.initialDate
     var finishDate = request.params.finishDate
 
-    const sql = `select id,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59';`
+    const sql = `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59';`
 
     connection.query(sql, (error, rows) =>{
         if (error) 
@@ -78,7 +79,7 @@ module.exports.Table = (request,response) =>{
         let places = [{}]
         for (let x = 0; x < rows.length; x++) {
             places[x] = {
-                id: rows[x].id,
+                id: rows[x].accommodation_uid,
                 placeName: rows[x].NAME,
                 city: `${rows[x].CITY}, ${rows[x].country_name}`,
                 progress: 0
@@ -89,27 +90,29 @@ module.exports.Table = (request,response) =>{
 }
 
 module.exports.Detail = (request,response) => {
-    var id = request.params.id
-    
-    const consul1D = `select FNAME,LNAME,r.UPDATED_AT,a.CREATED_AT, INQUIRY_ID,ADDRESS,a.country_name,a.CITY,a.CREATED_AT,SUBTYPE from ams_dashboard_users u join ams_dashboard_accommodations a on u.ID=a.USER_UID join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid where a.ID=${id};`
+    var uid = request.params.uid
 
-    var sql = `${consul1D}`
+    const consul1D = `select distinct name,FNAME,LNAME,ADDRESS,a.country_name,a.CITY,SUBTYPE,photourl from ams_dashboard_users u join ams_dashboard_accommodations a on u.ID=a.USER_UID join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid where a.ACCOMMODATION_UID='${uid}';`
+
+    const consul2D = `SELECT  inquiry_id,avg(CHAR_LENGTH(answers) - CHAR_LENGTH(REPLACE ( answers, 'PHOTO', '1234') )) AS cant FROM ams_dashboard_replies where accommodation_uid = '${uid}' group by(inquiry_id);`
+
+    var sql = `${consul1D} ${consul2D}`
     connection.query(sql, (error, rows) =>{
         if (error) 
             response.send(error)
         var obj = {
             
                 mapper:{
-                    name:rows[0].FNAME,
+                    name:rows[0][0].FNAME,
                 },
                 accomodation:{
-                    type: rows[0].SUBTYPE,
-                    address: rows[0].ADDRESS,
+                    type: rows[0][0].SUBTYPE,
+                    address: rows[0][0].ADDRESS,
 
                 },
                 progress: {
                     completedpercentage: 68,
-                    created: rows[0].CREATED_AT,
+                    created: rows[0][0].CREATED_AT,
                     duration: 6,
                     lastUpdate: rows[0].UPDATED_AT
 
@@ -127,7 +130,9 @@ module.exports.Detail = (request,response) => {
                         name: "Looby",
                         percentage: 50
                     },
-                ]
+                ],
+
+                photo: rows[1]
             }
             
     
