@@ -26,14 +26,19 @@ module.exports.Over = (request, response) =>{
 
     const consul7 = 'select sum(TIMESTAMPDIFF(DAY,CREATED_AT,COMPLETED_AT))/count(*) as days from ams_dashboard_accommodations where COMPLETED_AT is not null;'
 
-    const consul8 = 'select count(completed_at) as cant, month(completed_at) as mes,year(completed_at) as año from ams_dashboard_accommodations group by year(completed_at),month(completed_at) order by year(completed_at) desc,month(completed_at) desc limit 12;'
-    
+    const consul8 = `SELECT id,CHAR_LENGTH(answers) - CHAR_LENGTH( REPLACE (answers, 'PHOTO', '1234')) AS count FROM ams_dashboard_replies;`
 
-    var sql = `${consul1} ${consul2} ${consul3} ${consul4} ${consul5} ${consul6} ${consul7} ${consul8}`;
+    const consul9 = 'select count(completed_at) as cant, month(completed_at) as mes,year(completed_at) as año from ams_dashboard_accommodations group by year(completed_at),month(completed_at) order by year(completed_at) desc,month(completed_at) desc limit 13;'
+    var sql = `${consul1} ${consul2} ${consul3} ${consul4} ${consul5} ${consul6} ${consul7} ${consul8} ${consul9}`;
 
     connection.query(sql, (error, rows) =>{
         if (error) 
             response.send(error)
+        var newDates = []
+        for (let i = rows[8].length - 1; i >= 0; i--) {
+            newDates.push(rows[8][i])
+        }
+        console.log(newDates)
         var obj= {
             summary: {
                 completedMaps: rows[0][0].cantidad,
@@ -52,7 +57,7 @@ module.exports.Over = (request, response) =>{
                     "Food Service Area"
                 ],
                 avgTimeCompletionPerMap: Math.round(rows[6][0].days),
-                completedAMSMaps: rows[7]
+                completedAMSMaps: newDates
             },
 
         }
@@ -85,7 +90,10 @@ module.exports.Table = (request,response) =>{
 
 module.exports.Detail = (request,response) => {
     var id = request.params.id
-    const sql = `select FNAME,LNAME,r.UPDATED_AT,a.CREATED_AT, INQUIRY_ID,ADDRESS,a.country_name,a.CITY,a.CREATED_AT,SUBTYPE from ams_dashboard_users u join ams_dashboard_accommodations a on u.ID=a.USER_UID join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid where a.ID=${id};`
+    
+    const consul1D = `select FNAME,LNAME,r.UPDATED_AT,a.CREATED_AT, INQUIRY_ID,ADDRESS,a.country_name,a.CITY,a.CREATED_AT,SUBTYPE from ams_dashboard_users u join ams_dashboard_accommodations a on u.ID=a.USER_UID join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid where a.ID=${id};`
+
+    var sql = `${consul1D}`
     connection.query(sql, (error, rows) =>{
         if (error) 
             response.send(error)
