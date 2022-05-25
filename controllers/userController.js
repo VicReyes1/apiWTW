@@ -45,12 +45,11 @@ module.exports.Table = (request, response) => {
   var userId = request.params.id;
 
   var sql = `
-  select NAME,r.UPDATED_AT,INQUIRY_ID,ADDRESS,a.country_name,a.CITY,a.CREATED_AT,SUBTYPE
-  from ams_dashboard_users u join ams_dashboard_accommodations a on u.ID=a.USER_UID
+  select distinct a.ID as ACC_ID, u.ID, a.name, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+  from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
   join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-  where a.ID=${userId}
-  order by(r.created_at)
-  limit 1;`;
+  where u.ID=${userId} order by(r.UPDATED_AT)
+  `;
 
   /*
   var b = `select distinct NAME,a.CITY,a.country_name
@@ -64,10 +63,9 @@ module.exports.Table = (request, response) => {
     if (error) response.send(error);
 
     let obj = [{}];
-
     for (let x = 0; x < rows.length; x++) {
       obj[x] = {
-        id: rows[x].INQUIRY_ID,
+        id: rows[x].ACC_ID,
         placeName: rows[x].NAME,
         city: `${rows[x].CITY}, ${rows[x].country_name}`,
         progress: 0, //implementar progreso
