@@ -10,7 +10,8 @@ connection.connect((error) => {
 
 //MAPPERS OVERVIEW
 module.exports.List = (request, response) => {
-  var sql = `select u.ID, FNAME,LNAME,PHOTOURL,
+  //filtros con params y cn like
+  var sql = `select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
   count(COMPLETED_AT) as completed,
   (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
   from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
@@ -145,6 +146,44 @@ module.exports.Details = (request, response) => {
         };
       }
       response.json(obj);
+    });
+  });
+};
+
+//COUNTRIES WHERE WTW HAS PRESENCE
+module.exports.Countries = (request, response) => {
+  var sql = `
+  SELECT DISTINCT CITY,COUNTRY
+  FROM dashboard.ams_dashboard_users
+  where COUNTRY is not null and CITY is not null
+  order by COUNTRY
+  `;
+  var sql2 = `
+  SELECT DISTINCT COUNTRY 
+  FROM dashboard.ams_dashboard_users
+  where COUNTRY is not null and CITY is not null
+  order by COUNTRY
+  `;
+
+  connection.query(sql2, (error, rows1) => {
+    connection.query(sql, (error, rows) => {
+      if (error) response.send(error);
+
+      let obj = [{}];
+      let obj1 = [{}];
+      console.log(rows.length);
+      for (let i = 0; i < rows.length; i++) {
+        obj[i] = {
+          country: rows[i].CITY,
+        };
+      }
+      for (let i = 0; i < rows1.length; i++) {
+        obj1[i] = {
+          city: rows1[i].COUNTRY,
+        };
+      }
+      const finalOBJ= Object.assign(obj, obj1);
+      response.json(finalOBJ);
     });
   });
 };
