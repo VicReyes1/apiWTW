@@ -11,12 +11,69 @@ connection.connect((error) => {
 //MAPPERS OVERVIEW
 module.exports.List = (request, response) => {
   //filtros con params y cn like
-  var sql = `select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
-  count(COMPLETED_AT) as completed,
-  (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-  from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-  group by(u.ID);`;
-
+  //CMAPS ASC DESC
+  //IPMAPS ASC DESC
+  //NAME LIKE
+  var condition = request.params.maps;
+  var condition1 = request.params.order;
+  console.log(condition);
+  if (condition == "cmaps") {
+    if (condition1 == "asc") {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by u.id order by completed ${condition};
+      `;
+    } else if (condition1 == "desc") {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by u.id order by completed ${condition};
+      `;
+    } else {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
+      count(COMPLETED_AT) as completed,
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by(u.ID);
+      `;
+    }
+  } else if (condition == "ipmaps") {
+    if (condition1 == "asc") {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by u.id order by completed ${condition};
+      `;
+    } else if (condition1 == "desc") {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by u.id order by completed ${condition};
+      `;
+    } else {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
+      count(COMPLETED_AT) as completed,
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by(u.ID);
+      `;
+    }
+  } else if (condition == "name") {
+    var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      where FNAME like "${condition1}"
+      group by u.id ;
+      `;
+  }
   connection.query(sql, (error, rows) => {
     if (error) response.send(error);
 
@@ -40,7 +97,6 @@ module.exports.List = (request, response) => {
     response.json(obj);
   });
 };
-
 //MAPPERS CONTRIBUTIONS TABLE ***falta verificar "all ","completed" ,"non completed" ***
 module.exports.Table = (request, response) => {
   var userId = request.params.id;
@@ -182,7 +238,7 @@ module.exports.Countries = (request, response) => {
           city: rows1[i].COUNTRY,
         };
       }
-      const finalOBJ= Object.assign(obj, obj1);
+      const finalOBJ = Object.assign(obj, obj1);
       response.json(finalOBJ);
     });
   });
