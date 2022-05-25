@@ -24,10 +24,12 @@ module.exports.Over = (request, response) =>{
 
     const consul6 = 'select count (distinct city) as ciudadesC from ams_dashboard_accommodations;'
 
-    const consul9 = 'select sum(TIMESTAMPDIFF(DAY,CREATED_AT,COMPLETED_AT))/count(*) as days from ams_dashboard_accommodations where COMPLETED_AT is not null;'
+    const consul7 = 'select sum(TIMESTAMPDIFF(DAY,CREATED_AT,COMPLETED_AT))/count(*) as days from ams_dashboard_accommodations where COMPLETED_AT is not null;'
+
+    const consul8 = 'select count(completed_at) as cant, month(completed_at) as mes,year(completed_at) as año from ams_dashboard_accommodations group by year(completed_at),month(completed_at) order by year(completed_at) desc,month(completed_at) desc limit 12;'
     
 
-    var sql = `${consul1} ${consul2} ${consul3} ${consul4} ${consul5} ${consul6} ${consul9}`;
+    var sql = `${consul1} ${consul2} ${consul3} ${consul4} ${consul5} ${consul6} ${consul7} ${consul8}`;
 
     connection.query(sql, (error, rows) =>{
         if (error) 
@@ -50,7 +52,7 @@ module.exports.Over = (request, response) =>{
                     "Food Service Area"
                 ],
                 avgTimeCompletionPerMap: Math.round(rows[6][0].days),
-
+                completedAMSMaps: rows[7]
             },
 
         }
@@ -62,7 +64,7 @@ module.exports.Table = (request,response) =>{
     var initialDate = request.params.initialDate
     var finishDate = request.params.finishDate
 
-    const sql = `select NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59';`
+    const sql = `select id,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59';`
 
     connection.query(sql, (error, rows) =>{
         if (error) 
@@ -71,6 +73,7 @@ module.exports.Table = (request,response) =>{
         let places = [{}]
         for (let x = 0; x < rows.length; x++) {
             places[x] = {
+                id: rows[x].id,
                 placeName: rows[x].NAME,
                 city: `${rows[x].CITY}, ${rows[x].country_name}`,
                 progress: 0
@@ -81,7 +84,8 @@ module.exports.Table = (request,response) =>{
 }
 
 module.exports.Detail = (request,response) => {
-    const sql = 'select FNAME,LNAME,r.UPDATED_AT,a.CREATED_AT, INQUIRY_ID,ADDRESS,a.country_name,a.CITY,a.CREATED_AT,SUBTYPE from ams_dashboard_users u join ams_dashboard_accommodations a on u.ID=a.USER_UID join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid where a.ID=1 order by(r.UPDATED_AT) limit 1;'
+    var id = request.params.id
+    const sql = `select FNAME,LNAME,r.UPDATED_AT,a.CREATED_AT, INQUIRY_ID,ADDRESS,a.country_name,a.CITY,a.CREATED_AT,SUBTYPE from ams_dashboard_users u join ams_dashboard_accommodations a on u.ID=a.USER_UID join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid where a.ID=${id};`
     connection.query(sql, (error, rows) =>{
         if (error) 
             response.send(error)
