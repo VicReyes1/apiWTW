@@ -14,9 +14,9 @@ module.exports.List = (request, response) => {
   //CMAPS ASC DESC
   //IPMAPS ASC DESC
   //NAME LIKE
-  var condition = request.params.maps;
-  var condition1 = request.params.order;
-  console.log(condition);
+  var condition = request.query.maps;
+  var condition1 = request.query.order;
+  console.log(request.query.maps);
   if (condition == "cmaps") {
     if (condition1 == "asc") {
       var sql = `
@@ -209,15 +209,15 @@ module.exports.Details = (request, response) => {
 //COUNTRIES WHERE WTW HAS PRESENCE
 module.exports.Countries = (request, response) => {
   var sql = `
-  SELECT DISTINCT CITY,COUNTRY
+  SELECT DISTINCT CITY
   FROM dashboard.ams_dashboard_users
-  where COUNTRY is not null and CITY is not null
-  order by COUNTRY
+  where CITY is not null
+  order by CITY
   `;
   var sql2 = `
   SELECT DISTINCT COUNTRY 
   FROM dashboard.ams_dashboard_users
-  where COUNTRY is not null and CITY is not null
+  where COUNTRY is not null
   order by COUNTRY
   `;
 
@@ -225,21 +225,23 @@ module.exports.Countries = (request, response) => {
     connection.query(sql, (error, rows) => {
       if (error) response.send(error);
 
-      let obj = [{}];
-      let obj1 = [{}];
-      console.log(rows.length);
-      for (let i = 0; i < rows.length; i++) {
-        obj[i] = {
-          country: rows[i].CITY,
-        };
-      }
+      let obj1 = [];
+
       for (let i = 0; i < rows1.length; i++) {
-        obj1[i] = {
-          city: rows1[i].COUNTRY,
-        };
+        obj1[i] = rows1[i].COUNTRY;
       }
+      obj1 = { countries: obj1 };
+
+      let obj = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        obj[i] = rows[i].CITY;
+      }
+      obj = { cities: obj };
+
       const finalOBJ = Object.assign(obj, obj1);
       response.json(finalOBJ);
+
     });
   });
 };
