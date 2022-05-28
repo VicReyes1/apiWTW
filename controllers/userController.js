@@ -73,6 +73,14 @@ module.exports.List = (request, response) => {
       where FNAME like "${condition1}"
       group by u.id ;
       `;
+  } else {
+    var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
+      count(COMPLETED_AT) as completed,
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by(u.ID);
+      `;
   }
   connection.query(sql, (error, rows) => {
     if (error) response.send(error);
@@ -102,7 +110,7 @@ module.exports.Table = (request, response) => {
   var userId = request.params.id;
 
   var sql = `
-  select distinct a.ID as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+  select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
   from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
   join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
   where u.ID=${userId} order by(r.UPDATED_AT)
@@ -241,7 +249,6 @@ module.exports.Countries = (request, response) => {
 
       const finalOBJ = Object.assign(obj, obj1);
       response.json(finalOBJ);
-
     });
   });
 };
