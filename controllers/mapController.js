@@ -109,9 +109,12 @@ module.exports.Detail = (request,response) => {
 
     const consul4D = `SELECT  inquiry_id,avg(CHAR_LENGTH(answers) - CHAR_LENGTH(REPLACE ( answers, 'PHOTO', '1234') )) AS cant FROM ams_dashboard_replies where accommodation_uid = '${uid}' group by(inquiry_id);`
 
+    const consul5D = `CALL avg_procedure('${uid}','${arrOfZones[3]}');`
+    const consul6D = `CALL avg_procedure('${uid}','${arrOfZones[3]}');`
+
     //const consul5D = `CALL avg_procedure('${uid}','${arrOfZones[3]}',score);`
 
-    var sql = `${consul1D} ${consul2D} ${consul3D} ${consul4D}`
+    var sql = `${consul1D} ${consul2D} ${consul3D} ${consul4D} ${consul5D}`
     connection.query(sql, (error, rows) =>{
         if (error) 
             response.send(error)
@@ -120,22 +123,23 @@ module.exports.Detail = (request,response) => {
         
         var last = ""
         var days = 0
-
+        console.log(rows[1][0].completed_at)
+        console.log(rows[2][0].created_at)
         if (rows[0][0].completed_at != null) {
-            last = moment(rows[0][0].completed_at)
+            last = rows[0][0].completed_at
             
-        }else if(rows[0][0].completed_at == null && rows[1][0] != null){
-            console.log(rows[1][0].completed_at)
-            last = moment(rows[1][0].completed_at)
+        }else if(rows[0][0].completed_at == null && rows[1][0].completed_at != null){
+            
+            last = rows[1][0].completed_at
         }
-        else if(rows[0][0].completed_at == null && rows[1][0] == null && rows[2][0] != null){
-            last = moment(rows[2][0].created_at)
+        else if(rows[0][0].completed_at == null && rows[1][0] == null && rows[2][0].created_at != null){
+            last = rows[2][0].created_at
         }else{
             last = "No information"
         }
 
         if(last != "No information"){
-            days = last.diff(moment(rows[0][0].created_at),'days')
+            days = last.diff(rows[0][0].created_at,'days')
             if(days == 0){
                 days = 1
             }

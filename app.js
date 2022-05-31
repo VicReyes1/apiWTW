@@ -21,7 +21,9 @@ app.use('/mappers',usuario)
 app.use('/maps',maps)
 
 app.get('/', (req, res) => {
-    res.send('Hello World!')
+    return res.status(200).json({
+        message: `Hello world`
+    })
 })
 
 app.listen(port, () => {
