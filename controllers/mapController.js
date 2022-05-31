@@ -92,8 +92,16 @@ module.exports.Table = (request,response) =>{
 
 module.exports.Detail = (request,response) => {
     var uid = request.params.uid
+    var score = 0
+    const arrOfZones = [
+        "rooms",
+        "ta_transport",
+        "foodservice",
+        "elevator",
+        "stops",
+    ]
 
-    const consul1D = `SELECT * FROM ams_dashboard_accommodations JOIN ams_dashboard_users ON  ams_dashboard_accommodations.user_uid = ams_dashboard_users.uid WHERE accommodation_uid = '${uid}';`
+    const consul1D = `SELECT * FROM ams_dashboard_users JOIN ams_dashboard_accommodations ON  ams_dashboard_accommodations.user_uid = ams_dashboard_users.uid WHERE accommodation_uid = '${uid}';`
 
     const consul2D = `SELECT completed_at FROM ams_dashboard_replies WHERE accommodation_uid = '${uid}' GROUP BY (completed_at)limit 1;`
 
@@ -101,10 +109,13 @@ module.exports.Detail = (request,response) => {
 
     const consul4D = `SELECT  inquiry_id,avg(CHAR_LENGTH(answers) - CHAR_LENGTH(REPLACE ( answers, 'PHOTO', '1234') )) AS cant FROM ams_dashboard_replies where accommodation_uid = '${uid}' group by(inquiry_id);`
 
+    //const consul5D = `CALL avg_procedure('${uid}','${arrOfZones[3]}',score);`
+
     var sql = `${consul1D} ${consul2D} ${consul3D} ${consul4D}`
     connection.query(sql, (error, rows) =>{
         if (error) 
             response.send(error)
+        
         
         
         var last = ""
@@ -125,6 +136,9 @@ module.exports.Detail = (request,response) => {
 
         if(last != "No information"){
             days = last.diff(moment(rows[0][0].created_at),'days')
+            if(days == 0){
+                days = 1
+            }
         }else{
             days = "IN PROGRESS"
         }
@@ -136,9 +150,12 @@ module.exports.Detail = (request,response) => {
         var obj = {
             
                 mapper:{
+                    idMapper: rows[0][0].id,
                     name:rows[0][0].fname,
+                    lastname: rows[0][0].lname
                 },
                 accomodation:{
+                    nameHotel: rows[0][0].name,
                     type: rows[0][0].subtype,
                     address: rows[0][0].address,
 
