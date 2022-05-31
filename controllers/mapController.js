@@ -140,19 +140,29 @@ module.exports.Detail = (request,response) => {
                 days = 1
             }
         }else{
-            days = "IN PROGRESS"
+            days = moment().diff((rows[0][0].created_at),'days')
+            last = rows[0][0].created_at
+            if(days == 0){
+                days = 1
+            }
+        }
+
+        if (rows[0][0].photourl == null) {
+            rows[0][0].photourl = "No information"
         }
         
         if (rows[3].length == 0) {
             rows[3] = "No information"
         }
 
+
         var obj = {
             
                 mapper:{
                     idMapper: rows[0][0].id,
                     name:rows[0][0].fname,
-                    lastname: rows[0][0].lname
+                    lastname: rows[0][0].lname,
+                    photo: rows[0][0].photourl
                 },
                 accomodation:{
                     nameHotel: rows[0][0].name,
