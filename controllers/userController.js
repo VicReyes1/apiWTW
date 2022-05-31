@@ -10,70 +10,75 @@ connection.connect((error) => {
 
 //MAPPERS OVERVIEW
 module.exports.List = (request, response) => {
-  //filtros con params y cn like
+  //filtros con params y con like
   //CMAPS ASC DESC
   //IPMAPS ASC DESC
   //NAME LIKE
-  var condition = request.query.maps;
-  var condition1 = request.query.order;
+  //http://localhost:9000/mappers/overview?maps=ipmaps&order=asc
+  var maps = request.query.maps;
+  var order = request.query.order;
+
   console.log(request.query.maps);
-  if (condition == "cmaps") {
-    if (condition1 == "asc") {
+  console.log(request.query.order);
+
+  if (maps == "cmaps") {
+    if (order == "asc") {
       var sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by completed ${condition};
+      group by u.id order by completed ${order};
       `;
-    } else if (condition1 == "desc") {
+    }
+    if (order == "desc") {
       var sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by completed ${condition};
+      group by u.id order by completed ${order};
       `;
     } else {
       var sql = `
-      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
-      count(COMPLETED_AT) as completed,
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by(u.ID);
+      group by u.id order by completed;
       `;
     }
-  } else if (condition == "ipmaps") {
-    if (condition1 == "asc") {
+  } else if (maps == "ipmaps") {
+    if (order == "asc") {
       var sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by completed ${condition};
+      group by u.id order by inProgress ${order};
       `;
-    } else if (condition1 == "desc") {
+    }
+    if (order == "desc") {
       var sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by completed ${condition};
+      group by u.id order by inProgress ${order};
       `;
     } else {
       var sql = `
-      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
-      count(COMPLETED_AT) as completed,
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by(u.ID);
+      group by u.id order by inProgress;
       `;
     }
-  } else if (condition == "name") {
+  } else if (maps == "name") {
     var sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      where FNAME like "${condition1}"
+      where FNAME like "%${order}%"
       group by u.id ;
       `;
   } else {
+    //lo k sea
     var sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
       count(COMPLETED_AT) as completed,
@@ -128,6 +133,7 @@ module.exports.Table = (request, response) => {
     if (error) response.send(error);
 
     let obj = [{}];
+    console.log(rows);
     for (let x = 0; x < rows.length; x++) {
       obj[x] = {
         id: rows[x].ACC_ID,
