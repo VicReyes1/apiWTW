@@ -10,16 +10,10 @@ connection.connect((error) => {
 
 //MAPPERS OVERVIEW
 module.exports.List = (request, response) => {
-  //filtros con params y con like
-  //CMAPS ASC DESC
-  //IPMAPS ASC DESC
-  //NAME LIKE
-  //http://localhost:9000/mappers/overview?maps=ipmaps&order=asc
+  //URI format -> http://localhost:9000/mappers/overview?maps=ipmaps&order=asc
+
   var maps = request.query.maps;
   var order = request.query.order;
-
-  console.log(request.query.maps);
-  console.log(request.query.order);
 
   if (maps == "cmaps") {
     if (order == "asc") {
@@ -78,7 +72,7 @@ module.exports.List = (request, response) => {
       group by u.id ;
       `;
   } else {
-    //lo k sea
+    //No params provided
     var sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
       count(COMPLETED_AT) as completed,
@@ -87,6 +81,7 @@ module.exports.List = (request, response) => {
       group by(u.ID);
       `;
   }
+
   connection.query(sql, (error, rows) => {
     if (error) response.send(error);
 
@@ -110,43 +105,52 @@ module.exports.List = (request, response) => {
     response.json(obj);
   });
 };
-//MAPPERS CONTRIBUTIONS TABLE ***falta verificar "all ","completed" ,"non completed" ***
+
+//MAPPERS CONTRIBUTIONS TABLE
 module.exports.Table = (request, response) => {
+  //URI format -> http://localhost:9000/mappers/contributions/1?city=Mexico
+
+  var sql;
+
   var userId = request.params.id;
+  var coun = request.query.country;
+  var cit = request.query.city;
 
-  var sql = `
-  select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
-  from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-  join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-  where u.ID=${userId} order by(r.UPDATED_AT)
-  `;
-
-  /*
-  var b = `select distinct NAME,a.CITY,a.country_name
-  from ams_dashboard_users u join ams_dashboard_accommodations a on u.ID=a.USER_UID
-  join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-  where u.ID=${userId};`;*/
-
-  //request.query == a ? (sql = a) : (sql = b);
+  if (coun) {
+    sql = `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+    from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+    join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
+    where u.ID=1 and address like("%${coun}%") order by(r.UPDATED_AT)`;
+  } else if (cit) {
+    sql = `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+    from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+    join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
+    where u.ID=1 and address like("%${cit}%") order by(r.UPDATED_AT)`;
+  } else {
+    sql = `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+    from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+    join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
+    where u.ID=${userId} order by(r.UPDATED_AT)`;
+  }
 
   connection.query(sql, (error, rows) => {
     if (error) response.send(error);
 
     let obj = [{}];
-    console.log(rows);
+
     for (let x = 0; x < rows.length; x++) {
       obj[x] = {
         id: rows[x].ACC_ID,
         placeName: rows[x].NAME,
         city: `${rows[x].CITY}, ${rows[x].country_name}`,
-        progress: 0, //implementar progreso
+        progress: 0, //TODO: implementar progreso
       };
     }
     response.json(obj);
   });
 };
 
-//MAPPER DETAILS **implementar params
+//MAPPER DETAILS
 module.exports.Details = (request, response) => {
   var userId = request.params.id;
   var sql = `
