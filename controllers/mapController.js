@@ -1,5 +1,6 @@
 const { response } = require('express');
 const { request } = require('http');
+const moment = require('moment');
 const mysql = require ('mysql');
 const config = require('../helpers/config.js')
 const connection = mysql.createConnection(config);
@@ -92,29 +93,61 @@ module.exports.Table = (request,response) =>{
 module.exports.Detail = (request,response) => {
     var uid = request.params.uid
 
-    const consul1D = `select distinct name,FNAME,LNAME,ADDRESS,a.country_name,a.CITY,SUBTYPE,photourl from ams_dashboard_users u join ams_dashboard_accommodations a on u.ID=a.USER_UID join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid where a.ACCOMMODATION_UID='${uid}';`
+    const consul1D = `SELECT * FROM ams_dashboard_accommodations JOIN ams_dashboard_users ON  ams_dashboard_accommodations.user_uid = ams_dashboard_users.uid WHERE accommodation_uid = '${uid}';`
 
-    const consul2D = `SELECT  inquiry_id,avg(CHAR_LENGTH(answers) - CHAR_LENGTH(REPLACE ( answers, 'PHOTO', '1234') )) AS cant FROM ams_dashboard_replies where accommodation_uid = '${uid}' group by(inquiry_id);`
+    const consul2D = `SELECT completed_at FROM ams_dashboard_replies WHERE accommodation_uid = '${uid}' GROUP BY (completed_at)limit 1;`
 
-    var sql = `${consul1D} ${consul2D}`
+    const consul3D = `SELECT created_at FROM ams_dashboard_replies WHERE accommodation_uid = '${uid}' GROUP BY (created_at)limit 1;`
+
+    const consul4D = `SELECT  inquiry_id,avg(CHAR_LENGTH(answers) - CHAR_LENGTH(REPLACE ( answers, 'PHOTO', '1234') )) AS cant FROM ams_dashboard_replies where accommodation_uid = '${uid}' group by(inquiry_id);`
+
+    var sql = `${consul1D} ${consul2D} ${consul3D} ${consul4D}`
     connection.query(sql, (error, rows) =>{
         if (error) 
             response.send(error)
+        
+        
+        var last = ""
+        var days = 0
+
+        if (rows[0][0].completed_at != null) {
+            last = moment(rows[0][0].completed_at)
+            
+        }else if(rows[0][0].completed_at == null && rows[1][0] != null){
+            console.log(rows[1][0].completed_at)
+            last = moment(rows[1][0].completed_at)
+        }
+        else if(rows[0][0].completed_at == null && rows[1][0] == null && rows[2][0] != null){
+            last = moment(rows[2][0].created_at)
+        }else{
+            last = "No information"
+        }
+
+        if(last != "No information"){
+            days = last.diff(moment(rows[0][0].created_at),'days')
+        }else{
+            days = "IN PROGRESS"
+        }
+        
+        if (rows[3].length == 0) {
+            rows[3] = "No information"
+        }
+
         var obj = {
             
                 mapper:{
-                    name:rows[0][0].FNAME,
+                    name:rows[0][0].fname,
                 },
                 accomodation:{
-                    type: rows[0][0].SUBTYPE,
-                    address: rows[0][0].ADDRESS,
+                    type: rows[0][0].subtype,
+                    address: rows[0][0].address,
 
                 },
                 progress: {
                     completedpercentage: 68,
-                    created: rows[0][0].CREATED_AT,
-                    duration: 6,
-                    lastUpdate: rows[0].UPDATED_AT
+                    created: rows[0][0].created_at,
+                    duration: days,
+                    lastUpdate: last
 
                 },
                 progressAreas: [
@@ -132,10 +165,9 @@ module.exports.Detail = (request,response) => {
                     },
                 ],
 
-                photo: rows[1]
+                photos: rows[3]
+                
             }
-            
-    
         response.json(obj)
     })
 }
