@@ -11,12 +11,77 @@ connection.connect((error) => {
 //MAPPERS OVERVIEW
 module.exports.List = (request, response) => {
   //filtros con params y cn like
-  var sql = `select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
-  count(COMPLETED_AT) as completed,
-  (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-  from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-  group by(u.ID);`;
-
+  //CMAPS ASC DESC
+  //IPMAPS ASC DESC
+  //NAME LIKE
+  var condition = request.query.maps;
+  var condition1 = request.query.order;
+  console.log(request.query.maps);
+  if (condition == "cmaps") {
+    if (condition1 == "asc") {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by u.id order by completed ${condition};
+      `;
+    } else if (condition1 == "desc") {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by u.id order by completed ${condition};
+      `;
+    } else {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
+      count(COMPLETED_AT) as completed,
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by(u.ID);
+      `;
+    }
+  } else if (condition == "ipmaps") {
+    if (condition1 == "asc") {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by u.id order by completed ${condition};
+      `;
+    } else if (condition1 == "desc") {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by u.id order by completed ${condition};
+      `;
+    } else {
+      var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
+      count(COMPLETED_AT) as completed,
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by(u.ID);
+      `;
+    }
+  } else if (condition == "name") {
+    var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      where FNAME like "${condition1}"
+      group by u.id ;
+      `;
+  } else {
+    var sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
+      count(COMPLETED_AT) as completed,
+      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      group by(u.ID);
+      `;
+  }
   connection.query(sql, (error, rows) => {
     if (error) response.send(error);
 
@@ -40,13 +105,12 @@ module.exports.List = (request, response) => {
     response.json(obj);
   });
 };
-
 //MAPPERS CONTRIBUTIONS TABLE ***falta verificar "all ","completed" ,"non completed" ***
 module.exports.Table = (request, response) => {
   var userId = request.params.id;
 
   var sql = `
-  select distinct a.ID as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+  select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
   from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
   join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
   where u.ID=${userId} order by(r.UPDATED_AT)
@@ -153,15 +217,15 @@ module.exports.Details = (request, response) => {
 //COUNTRIES WHERE WTW HAS PRESENCE
 module.exports.Countries = (request, response) => {
   var sql = `
-  SELECT DISTINCT CITY,COUNTRY
+  SELECT DISTINCT CITY
   FROM dashboard.ams_dashboard_users
-  where COUNTRY is not null and CITY is not null
-  order by COUNTRY
+  where CITY is not null
+  order by CITY
   `;
   var sql2 = `
   SELECT DISTINCT COUNTRY 
   FROM dashboard.ams_dashboard_users
-  where COUNTRY is not null and CITY is not null
+  where COUNTRY is not null
   order by COUNTRY
   `;
 
@@ -169,20 +233,21 @@ module.exports.Countries = (request, response) => {
     connection.query(sql, (error, rows) => {
       if (error) response.send(error);
 
-      let obj = [{}];
-      let obj1 = [{}];
-      console.log(rows.length);
-      for (let i = 0; i < rows.length; i++) {
-        obj[i] = {
-          country: rows[i].CITY,
-        };
-      }
+      let obj1 = [];
+
       for (let i = 0; i < rows1.length; i++) {
-        obj1[i] = {
-          city: rows1[i].COUNTRY,
-        };
+        obj1[i] = rows1[i].COUNTRY;
       }
-      const finalOBJ= Object.assign(obj, obj1);
+      obj1 = { countries: obj1 };
+
+      let obj = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        obj[i] = rows[i].CITY;
+      }
+      obj = { cities: obj };
+
+      const finalOBJ = Object.assign(obj, obj1);
       response.json(finalOBJ);
     });
   });
