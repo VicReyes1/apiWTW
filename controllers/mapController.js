@@ -101,7 +101,7 @@ module.exports.Detail = (request,response) => {
         "stops",
     ]
 
-    const consul1D = `SELECT * FROM ams_dashboard_users JOIN ams_dashboard_accommodations ON  ams_dashboard_accommodations.user_uid = ams_dashboard_users.uid WHERE accommodation_uid = '${uid}';`
+    const consul1D = `SELECT * FROM ams_dashboard_accommodations  JOIN ams_dashboard_users ON  ams_dashboard_accommodations.user_uid = ams_dashboard_users.uid WHERE accommodation_uid = '${uid}';`
 
     const consul2D = `SELECT completed_at FROM ams_dashboard_replies WHERE accommodation_uid = '${uid}' GROUP BY (completed_at)limit 1;`
 
@@ -110,7 +110,6 @@ module.exports.Detail = (request,response) => {
     const consul4D = `SELECT  inquiry_id,avg(CHAR_LENGTH(answers) - CHAR_LENGTH(REPLACE ( answers, 'PHOTO', '1234') )) AS cant FROM ams_dashboard_replies where accommodation_uid = '${uid}' group by(inquiry_id);`
 
     const consul5D = `CALL avg_procedure('${uid}','${arrOfZones[3]}');`
-    const consul6D = `CALL avg_procedure('${uid}','${arrOfZones[3]}');`
 
     //const consul5D = `CALL avg_procedure('${uid}','${arrOfZones[3]}',score);`
 
@@ -123,8 +122,8 @@ module.exports.Detail = (request,response) => {
         
         var last = ""
         var days = 0
-        console.log(rows[1][0].completed_at)
-        console.log(rows[2][0].created_at)
+        var score = 0
+        var arrScores = []
         if (rows[0][0].completed_at != null) {
             last = rows[0][0].completed_at
             
@@ -139,7 +138,7 @@ module.exports.Detail = (request,response) => {
         }
 
         if(last != "No information"){
-            days = last.diff(rows[0][0].created_at,'days')
+            days = moment(last).diff(rows[0][0].created_at,'days')
             if(days == 0){
                 days = 1
             }
@@ -159,6 +158,8 @@ module.exports.Detail = (request,response) => {
             rows[3] = "No information"
         }
 
+        score = Math.round((rows[4][0].score * 100))
+        arrScores[3] = score
 
         var obj = {
             
@@ -183,8 +184,8 @@ module.exports.Detail = (request,response) => {
                 },
                 progressAreas: [
                     {
-                        name: "Building entrance",
-                        percentage: 100
+                        name: arrOfZones[3],
+                        percentage: arrScores[3]
                     },
                     {
                         name: "Food service",
