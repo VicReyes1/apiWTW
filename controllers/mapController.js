@@ -163,12 +163,19 @@ module.exports.Detail = (request,response) => {
         if (rows[0][0].completed_at != null) {
             last = rows[0][0].completed_at
             
-        }else if(rows[0][0].completed_at == null && rows[1][0].completed_at != null){
-            
-            last = rows[1][0].completed_at
+        }else if(rows[0][0].completed_at == null && rows[1][0] !== undefined ){
+            if (rows[1][0].completed_at != null) {
+                last = rows[1][0].completed_at
+            }else{
+                last = "No information"
+            }
         }
-        else if(rows[0][0].completed_at == null && rows[1][0] == null && rows[2][0].created_at != null){
-            last = rows[2][0].created_at
+        else if(rows[0][0].completed_at == null && (rows[1][0] === undefined ) && (rows[2][0] !== undefined)){
+            if (rows[2][0].created_at != null) {
+                last = rows[2][0].created_at
+            }else{
+                last = "No information"
+            }
         }else{
             last = "No information"
         }
