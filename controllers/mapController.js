@@ -119,6 +119,8 @@ module.exports.Detail = (request,response) => {
         "rooms",
         "elevator",
         "lobby",
+        "general_attributes",
+        "building_entrance"
     ]
     var arrScores = []
 
