@@ -71,8 +71,29 @@ module.exports.Over = (request, response) =>{
 module.exports.Table = (request,response) =>{
     var initialDate = request.params.initialDate
     var finishDate = request.params.finishDate
+    var body = request.body
 
-    const sql = `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59';`
+    var sql = ""
+    if(body.countries.length == 0 && body.cities.length == 0){
+        sql += `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59';`
+    }else if((body.countries.length > 0 && body.cities.length == 0) || (body.countries.length > 0 && body.cities.length > 0)){
+        for (let i = 0; i < body.countries.length; i++) {
+            if(i == (body.countries.length -1)){
+                sql += `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and country_name = '${body.countries[i]}';`
+            }else{
+                sql += `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and country_name = '${body.countries[i]}' union `
+            }
+        }
+    }else if(body.countries.length == 0 && body.cities.length > 0){
+        for (let i = 0; i < body.cities.length; i++) {
+            if(i == (body.cities.length -1)){
+                sql += `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and CITY = '${body.cities[i]}';`
+            }else{
+                sql += `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and CITY = '${body.cities[i]}' union `
+            }
+        }
+    }
+
 
     connection.query(sql, (error, rows) =>{
         if (error) 
