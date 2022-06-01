@@ -1,3 +1,4 @@
+const { error } = require('console');
 const { response } = require('express');
 const { request } = require('http');
 const moment = require('moment');
@@ -30,7 +31,11 @@ module.exports.Over = (request, response) =>{
     const consul8 = `SELECT id,CHAR_LENGTH(answers) - CHAR_LENGTH( REPLACE (answers, 'PHOTO', '1234')) AS count FROM ams_dashboard_replies;`
 
     const consul9 = 'select count(completed_at) as cant, month(completed_at) as mes,year(completed_at) as año from ams_dashboard_accommodations group by year(completed_at),month(completed_at) order by year(completed_at) desc,month(completed_at) desc limit 13;'
-    var sql = `${consul1} ${consul2} ${consul3} ${consul4} ${consul5} ${consul6} ${consul7} ${consul8} ${consul9}`;
+
+    const consul10 = `select avg(CHAR_LENGTH(answers) - CHAR_LENGTH( REPLACE (answers, 'firebasestorage', '12345678901234') )) AS countPhoto FROM ams_dashboard_replies;`
+
+    const consul11 = 'select distinct inquiry_id,count(inquiry_id) as menosMapeadas from ams_dashboard_replies group by inquiry_id order by count(inquiry_id) limit 3;'
+    var sql = `${consul1} ${consul2} ${consul3} ${consul4} ${consul5} ${consul6} ${consul7} ${consul8} ${consul9} ${consul10} ${consul11}`;
 
     connection.query(sql, (error, rows) =>{
         if (error) 
@@ -40,7 +45,6 @@ module.exports.Over = (request, response) =>{
         for (let i = rows[8].length - 1; i >= 0; i--) {
             newDates.push(rows[8][i])
         }
-
         var obj= {
             summary: {
                 completedMaps: rows[0][0].cantidad,
@@ -53,11 +57,8 @@ module.exports.Over = (request, response) =>{
                     countryNumber: rows[4][0].paisesC,
                     destinationNumber: rows[5][0].ciudadesC
                 },
-                avgNumberOfPhotos: 5,
-                leastMappedAreas: [
-                    "Building Entrance",
-                    "Food Service Area"
-                ],
+                avgNumberOfPhotos: Math.round(rows[9][0].countPhoto),
+                leastMappedAreas: rows[10],
                 avgTimeCompletionPerMap: Math.round(rows[6][0].days),
                 completedAMSMaps: newDates
             },
@@ -95,11 +96,11 @@ module.exports.Detail = (request,response) => {
     var score = 0
     const arrOfZones = [
         "rooms",
-        "ta_transport",
-        "foodservice",
         "elevator",
-        "stops",
     ]
+    var arrScores = []
+
+    var objPorcents = [{}]
 
     const consul1D = `SELECT * FROM ams_dashboard_accommodations  JOIN ams_dashboard_users ON  ams_dashboard_accommodations.user_uid = ams_dashboard_users.uid WHERE accommodation_uid = '${uid}';`
 
@@ -109,21 +110,35 @@ module.exports.Detail = (request,response) => {
 
     const consul4D = `SELECT  inquiry_id,avg(CHAR_LENGTH(answers) - CHAR_LENGTH(REPLACE ( answers, 'PHOTO', '1234') )) AS cant FROM ams_dashboard_replies where accommodation_uid = '${uid}' group by(inquiry_id);`
 
-    const consul5D = `CALL avg_procedure('${uid}','${arrOfZones[3]}');`
 
-    //const consul5D = `CALL avg_procedure('${uid}','${arrOfZones[3]}',score);`
+    for (let i = 0; i < arrOfZones.length; i++) {
+        const sql0 = `CALL avg_procedure('${uid}','${arrOfZones[i]}');`
+        connection.query(sql0,(error,rows0) =>{
+            if (error) 
+                response.send(error)
+            if (rows0[0][0].score == null) {
+                arrScores[i] = 0
+            }else{
+                arrScores[i] = Math.round(rows0[0][0].score * 100)
+            }
+        })
+    }
 
-    var sql = `${consul1D} ${consul2D} ${consul3D} ${consul4D} ${consul5D}`
+
+    var sql = `${consul1D} ${consul2D} ${consul3D} ${consul4D}`
     connection.query(sql, (error, rows) =>{
         if (error) 
             response.send(error)
-        
-        
-        
+        console.log(arrScores)
+        for (let x = 0; x < arrOfZones.length; x++) {
+            objPorcents[x] = {
+                name: arrOfZones[x],
+                process: arrScores[x]
+            }
+                
+        }
         var last = ""
         var days = 0
-        var score = 0
-        var arrScores = []
         if (rows[0][0].completed_at != null) {
             last = rows[0][0].completed_at
             
@@ -158,8 +173,6 @@ module.exports.Detail = (request,response) => {
             rows[3] = "No information"
         }
 
-        score = Math.round((rows[4][0].score * 100))
-        arrScores[3] = score
 
         var obj = {
             
@@ -182,20 +195,7 @@ module.exports.Detail = (request,response) => {
                     lastUpdate: last
 
                 },
-                progressAreas: [
-                    {
-                        name: arrOfZones[3],
-                        percentage: arrScores[3]
-                    },
-                    {
-                        name: "Food service",
-                        percentage: 70
-                    },
-                    {
-                        name: "Looby",
-                        percentage: 50
-                    },
-                ],
+                progressAreas: objPorcents,
 
                 photos: rows[3]
                 
