@@ -3,7 +3,7 @@ var config = {
     user: process.env.USER_db,
     password: process.env.PASS,
     database: process.env.NAME_db,
-    port: 3306,
+    port_db: process.env.PORT_db,
     multipleStatements: true
 }
 
