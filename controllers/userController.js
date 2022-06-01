@@ -16,9 +16,13 @@ module.exports.List = (request, response) => {
   var maps = request.query.maps;
   var order = request.query.order;
   var nombre = request.query.nombre;
+  var apellido = request.query.apellido;
+
   console.log(maps)
-  console.log(nombre)
   console.log(order)
+  console.log(nombre)
+  console.log(apellido)
+
   if (maps == "cmaps") {
     if (order == "desc") {
       sql = `
@@ -66,6 +70,42 @@ module.exports.List = (request, response) => {
        (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
        from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
        where FNAME like "%${nombre}%"
+       group by u.id;
+       `;
+    }
+  } else if (apellido != undefined) {
+    if (order == "desc") {
+      sql = `
+       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+       where LNAME like "%${apellido}%"
+       group by u.id order by desc;
+       `;
+    } else {
+      sql = `
+       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+       where LNAME like "%${apellido}%"
+       group by u.id;
+       `;
+    }
+  } else if ((apellido&&nombre) != undefined) {
+    if (order == "desc") {
+      sql = `
+       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+       where FNAME like "%${nombre}%" and LNAME like "%${apellido}%"
+       group by u.id order by desc;
+       `;
+    } else {
+      sql = `
+       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+       where FNAME like "%${nombre}% and LNAME like "%${apellido}%"
        group by u.id;
        `;
     }
