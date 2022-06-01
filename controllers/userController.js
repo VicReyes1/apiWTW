@@ -24,8 +24,7 @@ module.exports.List = (request, response) => {
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
       group by u.id order by ${maps} ${order};
       `;
-  }
-  else if (nombre) {
+  } else if (nombre) {
     sql = `
        select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as cmaps, 
        (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
@@ -135,55 +134,61 @@ module.exports.Details = (request, response) => {
       if (error) response.send(error);
 
       let obj = {};
+      let x, y;
 
-      if (rows == "" || rows1 == "") {
-        response.json("No existen resultados con esta busqueda");
+      if (rows.length == 0) {
+        y = rows1.length;
       } else {
-        for (let x = 0; x < rows.length; x++) {
-          var date = rows[x].CREATED_AT.toISOString();
+        y = rows.length;
+        var date = rows[0].CREATED_AT.toISOString();
+        console.log(date)
+        var YYYY = date.split("-")[0];
+        var MM = date.split("-")[1];
+        var D = date.split("-")[2];
+        var DD = D[0];
+        var DD = DD + D[1];
+        var HH = date.split("T")[1];
+        var HH = HH.split(".")[0];
+        var inqid = rows[0].INQUIRY_ID
+        var nomh = rows[0].name
+        var ciudad = rows[0].CITY 
+        var country = rows[0].country_name
+      }
 
-          var YYYY = date.split("-")[0];
-          var MM = date.split("-")[1];
-          var D = date.split("-")[2];
-          var DD = D[0];
-          var DD = DD + D[1];
-          var HH = date.split("T")[1];
-          var HH = HH.split(".")[0];
-
-          obj = {
-            name: {
-              name: rows1[x].FNAME,
-              lname: rows1[x].LNAME,
-              photo: rows1[x].PHOTOURL,
+      for (x = 0; x < y; x++) {
+        obj = {
+          name: {
+            name: rows1[x].FNAME,
+            lname: rows1[x].LNAME,
+            photo: rows1[x].PHOTOURL,
+          },
+          contributions: {
+            total: rows1[x].completed,
+            WTWcontributions: "Pending",
+            inprogress: rows1[x].inProgress,
+            averageTime: rows1[x].days,
+          },
+          replies: {
+            lastReply: {
+              day: DD || "-",
+              month: MM || "-",
+              year: YYYY || "-",
+              hour: HH || "-",
             },
-            contributions: {
-              total: rows1[x].completed,
-              WTWcontributions: "Pending",
-              inprogress: rows1[x].inProgress,
-              averageTime: rows1[x].days,
-            },
-            replies: {
-              lastReply: {
-                day: DD,
-                month: MM,
-                year: YYYY,
-                hour: HH,
-              },
-              lastCompletedArea: {
-                Area: rows[x].INQUIRY_ID,
+            lastCompletedArea: {
+              Area: inqid || "-",
+              location: {
+                name:  nomh || "-",
                 location: {
-                  name: rows[x].name,
-                  location: {
-                    city: rows[x].CITY,
-                    country: rows[x].country_name,
-                  },
+                  city: ciudad || "-",
+                  country: country || "-",
                 },
               },
             },
-          };
-        }
-        response.json(obj);
+          },
+        };
       }
+      response.json(obj);
     });
   });
 };
@@ -206,23 +211,26 @@ module.exports.Countries = (request, response) => {
   connection.query(sql2, (error, rows1) => {
     connection.query(sql, (error, rows) => {
       if (error) response.send(error);
+      if (rows == "" || rows1 == "") {
+        response.json("No existen resultados con esta busqueda");
+      } else {
+        let obj1 = [];
 
-      let obj1 = [];
+        for (let i = 0; i < rows1.length; i++) {
+          obj1[i] = rows1[i].COUNTRY;
+        }
+        obj1 = { countries: obj1 };
 
-      for (let i = 0; i < rows1.length; i++) {
-        obj1[i] = rows1[i].COUNTRY;
+        let obj = [];
+
+        for (let i = 0; i < rows.length; i++) {
+          obj[i] = rows[i].CITY;
+        }
+        obj = { cities: obj };
+
+        const finalOBJ = Object.assign(obj, obj1);
+        response.json(finalOBJ);
       }
-      obj1 = { countries: obj1 };
-
-      let obj = [];
-
-      for (let i = 0; i < rows.length; i++) {
-        obj[i] = rows[i].CITY;
-      }
-      obj = { cities: obj };
-
-      const finalOBJ = Object.assign(obj, obj1);
-      response.json(finalOBJ);
     });
   });
 };
