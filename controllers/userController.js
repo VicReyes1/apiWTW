@@ -121,7 +121,7 @@ module.exports.Table = (request, response) => {
 
     for (let x = 0; x < rows.length; x++) {
       obj[x] = {
-        id: rows[x].accommodation_uid,
+        id: rows[x].ACC_ID,
         placeName: rows[x].NAME,
         city: `${rows[x].CITY}, ${rows[x].country_name}`,
         progress: 0, //TODO: implementar progreso
