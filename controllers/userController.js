@@ -34,13 +34,12 @@ module.exports.List = (request, response) => {
        group by u.id 
        `;
   } else {
-    //No params provided
     sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
       count(COMPLETED_AT) as cmaps,
       (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by(u.ID);
+      group by (u.ID);
       `;
   }
 
@@ -137,50 +136,54 @@ module.exports.Details = (request, response) => {
 
       let obj = {};
 
-      for (let x = 0; x < rows.length; x++) {
-        var date = rows[x].CREATED_AT.toISOString();
+      if (rows == "" || rows1 == "") {
+        response.json("No existen resultados con esta busqueda");
+      } else {
+        for (let x = 0; x < rows.length; x++) {
+          var date = rows[x].CREATED_AT.toISOString();
 
-        var YYYY = date.split("-")[0];
-        var MM = date.split("-")[1];
-        var D = date.split("-")[2];
-        var DD = D[0];
-        var DD = DD + D[1];
-        var HH = date.split("T")[1];
-        var HH = HH.split(".")[0];
+          var YYYY = date.split("-")[0];
+          var MM = date.split("-")[1];
+          var D = date.split("-")[2];
+          var DD = D[0];
+          var DD = DD + D[1];
+          var HH = date.split("T")[1];
+          var HH = HH.split(".")[0];
 
-        obj = {
-          name: {
-            name: rows1[x].FNAME,
-            lname: rows1[x].LNAME,
-            photo: rows1[x].PHOTOURL,
-          },
-          contributions: {
-            total: rows1[x].completed,
-            WTWcontributions: "Pending",
-            inprogress: rows1[x].inProgress,
-            averageTime: rows1[x].days,
-          },
-          replies: {
-            lastReply: {
-              day: DD,
-              month: MM,
-              year: YYYY,
-              hour: HH,
+          obj = {
+            name: {
+              name: rows1[x].FNAME,
+              lname: rows1[x].LNAME,
+              photo: rows1[x].PHOTOURL,
             },
-            lastCompletedArea: {
-              Area: rows[x].INQUIRY_ID,
-              location: {
-                name: rows[x].name,
+            contributions: {
+              total: rows1[x].completed,
+              WTWcontributions: "Pending",
+              inprogress: rows1[x].inProgress,
+              averageTime: rows1[x].days,
+            },
+            replies: {
+              lastReply: {
+                day: DD,
+                month: MM,
+                year: YYYY,
+                hour: HH,
+              },
+              lastCompletedArea: {
+                Area: rows[x].INQUIRY_ID,
                 location: {
-                  city: rows[x].CITY,
-                  country: rows[x].country_name,
+                  name: rows[x].name,
+                  location: {
+                    city: rows[x].CITY,
+                    country: rows[x].country_name,
+                  },
                 },
               },
             },
-          },
-        };
+          };
+        }
+        response.json(obj);
       }
-      response.json(obj);
     });
   });
 };
