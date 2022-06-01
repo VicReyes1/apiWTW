@@ -12,27 +12,23 @@ connection.connect((error) => {
 module.exports.List = (request, response) => {
   //URI format -> http://localhost:9000/mappers/overview?maps=ipmaps&order=asc
 
+  var sql = ``;
   var maps = request.query.maps;
   var order = request.query.order;
-
+  var nombre = request.query.nombre;
+  console.log(maps)
+  console.log(nombre)
+  console.log(order)
   if (maps == "cmaps") {
-    if (order == "asc") {
-      var sql = `
-      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by completed ${order};
-      `;
-    }
     if (order == "desc") {
-      var sql = `
+      sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
       group by u.id order by completed ${order};
       `;
     } else {
-      var sql = `
+      sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
@@ -40,40 +36,42 @@ module.exports.List = (request, response) => {
       `;
     }
   } else if (maps == "ipmaps") {
-    if (order == "asc") {
-      var sql = `
-      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by inProgress ${order};
-      `;
-    }
     if (order == "desc") {
-      var sql = `
+      sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
       group by u.id order by inProgress ${order};
       `;
     } else {
-      var sql = `
+      sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
       group by u.id order by inProgress;
       `;
     }
-  } else if (maps == "name") {
-    var sql = `
-      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      where FNAME like "%${order}%"
-      group by u.id ;
-      `;
+  } else if (nombre != undefined) {
+    if (order == "desc") {
+      sql = `
+       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+       where FNAME like "%${nombre}%"
+       group by u.id order by desc;
+       `;
+    } else {
+      sql = `
+       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+       where FNAME like "%${nombre}%"
+       group by u.id;
+       `;
+    }
   } else {
     //No params provided
-    var sql = `
+    sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
       count(COMPLETED_AT) as completed,
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
@@ -110,7 +108,7 @@ module.exports.List = (request, response) => {
 module.exports.Table = (request, response) => {
   //URI format -> http://localhost:9000/mappers/contributions/1?city=Mexico
 
-  var sql;
+  var sql = ``;
 
   var userId = request.params.id;
   var coun = request.query.country;
