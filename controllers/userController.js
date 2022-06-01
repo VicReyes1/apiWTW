@@ -17,19 +17,18 @@ module.exports.List = (request, response) => {
   var order = request.query.order;
   var nombre = request.query.nombre;
 
-  order == undefined ? (order = "desc") : (order = "asc");
-  if (maps) {
+  if (maps && order) {
     sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as cmaps, 
-      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
       group by u.id order by ${maps} ${order};
       `;
   }
-  if (nombre) {
+  else if (nombre) {
     sql = `
-       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as cmaps, 
+       (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
        from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
        where LNAME like "%${nombre}%" or FNAME like "%${nombre}%"
        group by u.id 
@@ -38,8 +37,8 @@ module.exports.List = (request, response) => {
     //No params provided
     sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
-      count(COMPLETED_AT) as completed,
-      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
+      count(COMPLETED_AT) as cmaps,
+      (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
       group by(u.ID);
       `;
@@ -59,8 +58,8 @@ module.exports.List = (request, response) => {
           photo: rows[x].PHOTOURL,
         },
         maps: {
-          done: rows[x].completed,
-          progress: rows[x].inProgress,
+          done: rows[x].cmaps,
+          progress: rows[x].ipmaps,
         },
         contact: rows[x].EMAIL,
       };
