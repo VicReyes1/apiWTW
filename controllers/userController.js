@@ -16,99 +16,24 @@ module.exports.List = (request, response) => {
   var maps = request.query.maps;
   var order = request.query.order;
   var nombre = request.query.nombre;
-  var apellido = request.query.apellido;
 
-  console.log(maps)
-  console.log(order)
-  console.log(nombre)
-  console.log(apellido)
-
-  if (maps == "cmaps") {
-    if (order == "desc") {
-      sql = `
-      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
+  order == undefined ? (order = "desc") : (order = "asc");
+  if (maps) {
+    sql = `
+      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as cmaps, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by completed ${order};
+      group by u.id order by ${maps} ${order};
       `;
-    } else {
-      sql = `
-      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by completed;
-      `;
-    }
-  } else if (maps == "ipmaps") {
-    if (order == "desc") {
-      sql = `
-      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by inProgress ${order};
-      `;
-    } else {
-      sql = `
-      select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-      (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by inProgress;
-      `;
-    }
-  } else if (nombre != undefined) {
-    if (order == "desc") {
-      sql = `
+  }
+  if (nombre) {
+    sql = `
        select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
        (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
        from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-       where FNAME like "%${nombre}%"
-       group by u.id order by desc;
+       where LNAME like "%${nombre}%" or FNAME like "%${nombre}%"
+       group by u.id 
        `;
-    } else {
-      sql = `
-       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-       where FNAME like "%${nombre}%"
-       group by u.id;
-       `;
-    }
-  } else if (apellido != undefined) {
-    if (order == "desc") {
-      sql = `
-       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-       where LNAME like "%${apellido}%"
-       group by u.id order by desc;
-       `;
-    } else {
-      sql = `
-       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-       where LNAME like "%${apellido}%"
-       group by u.id;
-       `;
-    }
-  } else if ((apellido&&nombre) != undefined) {
-    if (order == "desc") {
-      sql = `
-       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-       where FNAME like "%${nombre}%" and LNAME like "%${apellido}%"
-       group by u.id order by desc;
-       `;
-    } else {
-      sql = `
-       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as completed, 
-       (count(CREATED_AT)-count(COMPLETED_AT)) as inProgress
-       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-       where FNAME like "%${nombre}% and LNAME like "%${apellido}%"
-       group by u.id;
-       `;
-    }
   } else {
     //No params provided
     sql = `
@@ -153,13 +78,12 @@ module.exports.Table = (request, response) => {
   var userId = request.params.id;
   var coun = request.query.country;
   var cit = request.query.city;
-  
+
   if (coun) {
     sql = `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
     from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
     join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
     where like("%${coun}%") order by(r.UPDATED_AT)`;
-
   } else if (cit) {
     sql = `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
     from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
@@ -168,7 +92,7 @@ module.exports.Table = (request, response) => {
   } else {
     sql = `SELECT a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
   FROM ams_dashboard_accommodations a join ams_dashboard_users b
-  on user_uid = b.uid where b.id = ${userId};`;    
+  on user_uid = b.uid where b.id = ${userId};`;
   }
 
   connection.query(sql, (error, rows) => {
