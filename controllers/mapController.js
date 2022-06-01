@@ -118,6 +118,7 @@ module.exports.Detail = (request,response) => {
     const arrOfZones = [
         "rooms",
         "elevator",
+        "lobby",
     ]
     var arrScores = []
 
