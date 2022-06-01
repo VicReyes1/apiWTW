@@ -159,6 +159,7 @@ module.exports.Details = (request, response) => {
         x,
         y;
 
+
       if (rows.length == 0) {
         y = rows1.length;
       } else {
@@ -175,6 +176,7 @@ module.exports.Details = (request, response) => {
         var nomh = rows[0].name;
         var ciudad = rows[0].CITY;
         var country = rows[0].country_name;
+
       }
 
       for (x = 0; x < y; x++) {
