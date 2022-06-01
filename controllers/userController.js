@@ -113,22 +113,22 @@ module.exports.Table = (request, response) => {
   var userId = request.params.id;
   var coun = request.query.country;
   var cit = request.query.city;
-
+  
   if (coun) {
     sql = `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
     from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
     join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-    where u.ID=1 and address like("%${coun}%") order by(r.UPDATED_AT)`;
+    where like("%${coun}%") order by(r.UPDATED_AT)`;
+
   } else if (cit) {
     sql = `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
     from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
     join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-    where u.ID=1 and address like("%${cit}%") order by(r.UPDATED_AT)`;
+    where address like("%${cit}%") order by(r.UPDATED_AT)`;
   } else {
-    sql = `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
-    from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-    join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-    where u.ID=${userId} order by(r.UPDATED_AT)`;
+    sql = `SELECT a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
+  FROM ams_dashboard_accommodations a join ams_dashboard_users b
+  on user_uid = b.uid where b.id = ${userId};`;    
   }
 
   connection.query(sql, (error, rows) => {
