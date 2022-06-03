@@ -43,38 +43,38 @@ module.exports.List = (request, response) => {
   }
 
   connection.query(sql, (error, rows) => {
-    if (error) response.send(error);
-
-    let obj = [{}];
-
-    for (let x = 0; x < rows.length; x++) {
-      obj[x] = {
-        name: {
-          id: rows[x].ID,
-          name: rows[x].FNAME,
-          lname: rows[x].LNAME,
-          photo: rows[x].PHOTOURL,
-        },
-        maps: {
-          done: rows[x].cmaps,
-          progress: rows[x].ipmaps,
-        },
-        contact: rows[x].EMAIL,
-      };
+    try {
+      let obj = [{}];
+      for (let x = 0; x < rows.length; x++) {
+        obj[x] = {
+          name: {
+            id: rows[x].ID,
+            name: rows[x].FNAME,
+            lname: rows[x].LNAME,
+            photo: rows[x].PHOTOURL,
+          },
+          maps: {
+            done: rows[x].cmaps,
+            progress: rows[x].ipmaps,
+          },
+          contact: rows[x].EMAIL,
+        };
+      }
+      rows == ""
+        ? response.status(404).json("No matches found")
+        : response.json(obj);
+    } catch (error) {
+      return response.status(400).json({ error: error.toString() });
     }
-    response.json(obj);
   });
 };
 
 //MAPPERS CONTRIBUTIONS TABLE
 module.exports.Table = (request, response) => {
-  //URI format -> http://localhost:9000/mappers/contributions/1?city=Mexico
+  //URI format -> http://localhost:9000/mappers/contributions/2
 
   var sql = ``;
-
   var userId = request.params.id;
-  //var coun = request.query.country;
-  //var cit = request.query.city;
   var body = request.body;
 
   if (body.countries.length == 0 && body.cities.length == 0) {
@@ -113,22 +113,28 @@ module.exports.Table = (request, response) => {
       }
     }
   }
+  try {
+    connection.query(sql, (error, rows) => {
+      if (error) response.send(error);
 
-  connection.query(sql, (error, rows) => {
-    if (error) response.send(error);
+      let obj = [{}];
 
-    let obj = [{}];
+      for (let x = 0; x < rows.length; x++) {
+        obj[x] = {
+          id: rows[x].ACC_ID,
+          placeName: rows[x].NAME,
+          city: `${rows[x].CITY}, ${rows[x].country_name}`,
+          progress: 0, //TODO: implementar progreso
+        };
+      }
 
-    for (let x = 0; x < rows.length; x++) {
-      obj[x] = {
-        id: rows[x].ACC_ID,
-        placeName: rows[x].NAME,
-        city: `${rows[x].CITY}, ${rows[x].country_name}`,
-        progress: 0, //TODO: implementar progreso
-      };
-    }
-    response.json(obj);
-  });
+      rows == ""
+        ? response.status(404).json("No matches found")
+        : response.json(obj);
+    });
+  } catch (error) {
+    return response.status(400).json({ error: error.toString() });
+  }
 };
 
 //MAPPER DETAILS
@@ -150,71 +156,72 @@ module.exports.Details = (request, response) => {
   where u.ID=${userId}
   group by(u.ID);
   `;
+  try {
+    connection.query(sql2, (error, rows1) => {
+      connection.query(sql, (error, rows) => {
+        if (error) response.send(error);
 
-  connection.query(sql2, (error, rows1) => {
-    connection.query(sql, (error, rows) => {
-      if (error) response.send(error);
+        let obj = {},
+          x,
+          y;
 
-      let obj = {},
-        x,
-        y;
+        if (rows.length == 0) {
+          y = rows1.length;
+        } else {
+          y = rows.length;
+          var date = rows[0].CREATED_AT.toISOString();
+          var YYYY = date.split("-")[0];
+          var MM = date.split("-")[1];
+          var D = date.split("-")[2];
+          var DD = D[0];
+          var DD = DD + D[1];
+          var HH = date.split("T")[1];
+          var HH = HH.split(".")[0];
+          var inqid = rows[0].INQUIRY_ID;
+          var nomh = rows[0].name;
+          var ciudad = rows[0].CITY;
+          var country = rows[0].country_name;
+        }
 
-
-      if (rows.length == 0) {
-        y = rows1.length;
-      } else {
-        y = rows.length;
-        var date = rows[0].CREATED_AT.toISOString();
-        var YYYY = date.split("-")[0];
-        var MM = date.split("-")[1];
-        var D = date.split("-")[2];
-        var DD = D[0];
-        var DD = DD + D[1];
-        var HH = date.split("T")[1];
-        var HH = HH.split(".")[0];
-        var inqid = rows[0].INQUIRY_ID;
-        var nomh = rows[0].name;
-        var ciudad = rows[0].CITY;
-        var country = rows[0].country_name;
-
-      }
-
-      for (x = 0; x < y; x++) {
-        obj = {
-          name: {
-            name: rows1[x].FNAME,
-            lname: rows1[x].LNAME,
-            photo: rows1[x].PHOTOURL,
-          },
-          contributions: {
-            total: rows1[x].completed,
-            WTWcontributions: "Pending",
-            inprogress: rows1[x].inProgress,
-            averageTime: rows1[x].days,
-          },
-          replies: {
-            lastReply: {
-              day: DD || "unavailable",
-              month: MM || "unavailable",
-              year: YYYY || "unavailable",
-              hour: HH || "unavailable",
+        for (x = 0; x < y; x++) {
+          obj = {
+            name: {
+              name: rows1[x].FNAME,
+              lname: rows1[x].LNAME,
+              photo: rows1[x].PHOTOURL,
             },
-            lastCompletedArea: {
-              Area: inqid || "unavailable",
-              location: {
-                name: nomh || "unavailable",
+            contributions: {
+              total: rows1[x].completed,
+              WTWcontributions: "Pending",
+              inprogress: rows1[x].inProgress,
+              averageTime: rows1[x].days,
+            },
+            replies: {
+              lastReply: {
+                day: DD || "unavailable",
+                month: MM || "unavailable",
+                year: YYYY || "unavailable",
+                hour: HH || "unavailable",
+              },
+              lastCompletedArea: {
+                Area: inqid || "unavailable",
                 location: {
-                  city: ciudad || "unavailable",
-                  country: country || "unavailable",
+                  name: nomh || "unavailable",
+                  location: {
+                    city: ciudad || "unavailable",
+                    country: country || "unavailable",
+                  },
                 },
               },
             },
-          },
-        };
-      }
-      response.json(obj);
+          };
+        }
+        response.json(obj);
+      });
     });
-  });
+  } catch (error) {
+    return response.status(400).json({ error: error.toString() });
+  }
 };
 
 //COUNTRIES WHERE WTW HAS PRESENCE
@@ -231,30 +238,33 @@ module.exports.Countries = (request, response) => {
   where COUNTRY is not null
   order by COUNTRY
   `;
+  try {
+    connection.query(sql2, (error, rows1) => {
+      connection.query(sql, (error, rows) => {
+        if (error) response.send(error);
+        if (rows == "" || rows1 == "") {
+          response.json("No existen resultados con esta busqueda");
+        } else {
+          let obj1 = [];
 
-  connection.query(sql2, (error, rows1) => {
-    connection.query(sql, (error, rows) => {
-      if (error) response.send(error);
-      if (rows == "" || rows1 == "") {
-        response.json("No existen resultados con esta busqueda");
-      } else {
-        let obj1 = [];
+          for (let i = 0; i < rows1.length; i++) {
+            obj1[i] = rows1[i].COUNTRY;
+          }
+          obj1 = { countries: obj1 };
 
-        for (let i = 0; i < rows1.length; i++) {
-          obj1[i] = rows1[i].COUNTRY;
+          let obj = [];
+
+          for (let i = 0; i < rows.length; i++) {
+            obj[i] = rows[i].CITY;
+          }
+          obj = { cities: obj };
+
+          const finalOBJ = Object.assign(obj, obj1);
+          response.json(finalOBJ);
         }
-        obj1 = { countries: obj1 };
-
-        let obj = [];
-
-        for (let i = 0; i < rows.length; i++) {
-          obj[i] = rows[i].CITY;
-        }
-        obj = { cities: obj };
-
-        const finalOBJ = Object.assign(obj, obj1);
-        response.json(finalOBJ);
-      }
+      });
     });
-  });
+  } catch (error) {
+    return response.status(400).json({ error: error.toString() });
+  }
 };
