@@ -8,21 +8,31 @@ connection.connect((error) => {
   console.log("conexion exitosa USER");
 });
 
+/*
+TODO 
+implementar offset en demas endpoints Zzzzz
+queries vacias 404 
+hacer pruebas con offset pipisiado 
+
+*/
+
 //MAPPERS OVERVIEW
 module.exports.List = (request, response) => {
-  //URI format -> http://localhost:9000/mappers/overview?maps=ipmaps&order=asc
-
+  //URI format -> http://localhost:9000/mappers/overview?maps=ipmaps&order=asc&page=3
   var sql = ``;
   var maps = request.query.maps;
   var order = request.query.order;
   var nombre = request.query.nombre;
+  var page = request.query.page * 10;
 
   if (maps && order) {
     sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as cmaps, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by u.id order by ${maps} ${order};
+      group by u.id
+      order by ${maps} ${order} 
+      limit 7 offset ${page};
       `;
   } else if (nombre) {
     sql = `
@@ -31,6 +41,7 @@ module.exports.List = (request, response) => {
        from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
        where LNAME like "%${nombre}%" or FNAME like "%${nombre}%"
        group by u.id 
+       limit 7 offset ${page};
        `;
   } else {
     sql = `
@@ -39,6 +50,7 @@ module.exports.List = (request, response) => {
       (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
       group by (u.ID);
+      limit 7 offset ${page};
       `;
   }
 
@@ -64,7 +76,7 @@ module.exports.List = (request, response) => {
         ? response.status(404).json("No matches found")
         : response.json(obj);
     } catch (error) {
-      return response.status(400).json({ error: error.toString() });
+      return response.status(400).json("Bad request");
     }
   });
 };
@@ -80,7 +92,8 @@ module.exports.Table = (request, response) => {
   if (body.countries.length == 0 && body.cities.length == 0) {
     sql += `SELECT a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
             FROM ams_dashboard_accommodations a join ams_dashboard_users b
-            on user_uid = b.uid where b.id = ${userId};`;
+            on user_uid = b.uid
+            where b.id = ${userId};`;
   } else if (
     (body.countries.length > 0 && body.cities.length == 0) ||
     (body.countries.length > 0 && body.cities.length > 0)
@@ -90,12 +103,14 @@ module.exports.Table = (request, response) => {
         sql += `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and country_name = '${body.countries[i]}' order by(r.UPDATED_AT)`;
+                where u.id= ${userId} and country_name = '${body.countries[i]}' 
+                order by(r.UPDATED_AT)`;
       } else {
         sql += `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and country_name = '${body.countries[i]}' order by(r.UPDATED_AT) union`;
+                where u.id= ${userId} and country_name = '${body.countries[i]}' 
+                order by(r.UPDATED_AT) union`;
       }
     }
   } else if (body.countries.length == 0 && body.cities.length > 0) {
@@ -104,12 +119,14 @@ module.exports.Table = (request, response) => {
         sql += `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and a.CITY = '${body.cities[i]}' order by(r.UPDATED_AT)`;
+                where u.id= ${userId} and a.CITY = '${body.cities[i]}' 
+                order by(r.UPDATED_AT)`;
       } else {
         sql += `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and a.CITY ='${body.cities[i]}' order by(r.UPDATED_AT) union`;
+                where u.id= ${userId} and a.CITY ='${body.cities[i]}' 
+                order by(r.UPDATED_AT) union`;
       }
     }
   }
