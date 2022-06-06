@@ -29,3 +29,11 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
+
+//TQM coladera de errores
+app.use((err, req, res, next)=>{
+    return res.status(500).json({
+        "name": err.name,
+        "message": `${err.message}, ${err.original ? err.original : ':('}`,
+    })
+})

@@ -13,7 +13,6 @@ TODO
 implementar offset en demas endpoints Zzzzz
 queries vacias 404 
 hacer pruebas con offset pipisiado 
-
 */
 
 //MAPPERS OVERVIEW
@@ -23,7 +22,7 @@ module.exports.List = (request, response) => {
   var maps = request.query.maps;
   var order = request.query.order;
   var nombre = request.query.nombre;
-  var page = request.query.page * 10;
+  var page = request.query.page * 9;
 
   if (maps && order) {
     sql = `
@@ -32,7 +31,7 @@ module.exports.List = (request, response) => {
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
       group by u.id
       order by ${maps} ${order} 
-      limit 7 offset ${page};
+      limit 9 offset ${page};
       `;
   } else if (nombre) {
     sql = `
@@ -41,7 +40,7 @@ module.exports.List = (request, response) => {
        from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
        where LNAME like "%${nombre}%" or FNAME like "%${nombre}%"
        group by u.id 
-       limit 7 offset ${page};
+       limit 9 offset ${page};
        `;
   } else {
     sql = `
@@ -50,7 +49,7 @@ module.exports.List = (request, response) => {
       (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
       group by (u.ID);
-      limit 7 offset ${page};
+      limit 9 offset ${page};
       `;
   }
 
@@ -83,17 +82,21 @@ module.exports.List = (request, response) => {
 
 //MAPPERS CONTRIBUTIONS TABLE
 module.exports.Table = (request, response) => {
-  //URI format -> http://localhost:9000/mappers/contributions/2
+  //URI format -> http://localhost:9000/mappers/contributions/2?page&=3
 
   var sql = ``;
   var userId = request.params.id;
   var body = request.body;
+  var page = request.params.page * 5; // ta mal
+  console.log(page);
 
   if (body.countries.length == 0 && body.cities.length == 0) {
     sql += `SELECT a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
             FROM ams_dashboard_accommodations a join ams_dashboard_users b
             on user_uid = b.uid
-            where b.id = ${userId};`;
+            where b.id = ${userId}
+            limit 5 offset ${page}
+           `;
   } else if (
     (body.countries.length > 0 && body.cities.length == 0) ||
     (body.countries.length > 0 && body.cities.length > 0)
