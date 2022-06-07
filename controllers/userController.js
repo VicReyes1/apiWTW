@@ -236,7 +236,9 @@ module.exports.Details = (request, response) => {
             },
           };
         }
-        response.json(obj);
+        rows1 == ""
+          ? response.status(404).json("No matches found")
+          : response.json(obj);
       });
     });
   } catch (error) {
@@ -263,7 +265,9 @@ module.exports.Countries = (request, response) => {
       connection.query(sql, (error, rows) => {
         if (error) response.send(error);
         if (rows == "" || rows1 == "") {
-          response.json("No existen resultados con esta busqueda");
+          return response
+            .status(404)
+            .json("No existen resultados para esta busqueda");
         } else {
           let obj1 = [];
 
