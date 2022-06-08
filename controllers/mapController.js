@@ -116,7 +116,7 @@ module.exports.Table = (request,response) =>{
             finalF = Math.round(final * 100)
             places[x] = {
                 id: rows[x].accommodation_uid,
-                placeName: rows[x].NAME,
+                placeName: rows[x].name,
                 city: `${rows[x].city}, ${rows[x].country_name}`,
                 progress: finalF
             }
