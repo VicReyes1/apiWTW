@@ -175,6 +175,7 @@ module.exports.Details = (request, response) => {
   where u.ID=${userId}
   group by(u.ID);
   `;
+  
   try {
     connection.query(sql2, (error, rows1) => {
       connection.query(sql, (error, rows) => {
