@@ -83,40 +83,46 @@ module.exports.Table = (request,response) =>{
     var finishDate = request.params.finishDate
     var body = request.body
 
+    
     var sql = ""
     if(body.countries.length == 0 && body.cities.length == 0){
-        sql += `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59';`
+        sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59';`
     }else if((body.countries.length > 0 && body.cities.length == 0) || (body.countries.length > 0 && body.cities.length > 0)){
         for (let i = 0; i < body.countries.length; i++) {
             if(i == (body.countries.length -1)){
-                sql += `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and country_name = '${body.countries[i]}';`
+                sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and country_name = '${body.countries[i]}';`
             }else{
-                sql += `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and country_name = '${body.countries[i]}' union `
+                sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and country_name = '${body.countries[i]}' union `
             }
         }
     }else if(body.countries.length == 0 && body.cities.length > 0){
         for (let i = 0; i < body.cities.length; i++) {
             if(i == (body.cities.length -1)){
-                sql += `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and CITY = '${body.cities[i]}';`
+                sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and CITY = '${body.cities[i]}';`
             }else{
-                sql += `select accommodation_uid,NAME,country_name,CITY from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and CITY = '${body.cities[i]}' union `
+                sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and CITY = '${body.cities[i]}' union `
             }
         }
     }
-
-
+    
+    var final = 0
+    var finalF = 0
     connection.query(sql, (error, rows) =>{
         if (error) 
             response.send(error)
-        
         let places = [{}]
         for (let x = 0; x < rows.length; x++) {
+            final = (rows[x].building_entrance * 0.20) + (rows[x].elevator * 0.10) + (rows[x].general_attributes * 0.20) + (rows[x].lobby * 0.20) + (final += rows[x].rooms * 0.30)
+            finalF = Math.round(final * 100)
             places[x] = {
                 id: rows[x].accommodation_uid,
                 placeName: rows[x].NAME,
-                city: `${rows[x].CITY}, ${rows[x].country_name}`,
-                progress: 0
+                city: `${rows[x].city}, ${rows[x].country_name}`,
+                progress: finalF
             }
+            final = 0
+            finalF = 0
+            
         }
         response.json(places)
     })
