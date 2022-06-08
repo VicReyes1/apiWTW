@@ -22,7 +22,7 @@ module.exports.List = (request, response) => {
   var maps = request.query.maps;
   var order = request.query.order;
   var nombre = request.query.nombre;
-  var page = request.query.page * 9;
+  //var page = request.query.page * 9;
 
   if (maps && order) {
     sql = `
@@ -30,27 +30,27 @@ module.exports.List = (request, response) => {
       (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
       group by u.id
-      order by ${maps} ${order} 
-      limit 9 offset ${page};
-      `;
+      order by ${maps} ${order} `;
+    //limit 9 offset ${page};
+    //`;
   } else if (nombre) {
     sql = `
        select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as cmaps, 
        (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
        from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
        where LNAME like "%${nombre}%" or FNAME like "%${nombre}%"
-       group by u.id 
-       limit 9 offset ${page};
-       `;
+       group by u.id `;
+    // limit 9 offset ${page};
+    //`;
   } else {
     sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL,
       count(COMPLETED_AT) as cmaps,
       (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
       from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-      group by (u.ID);
-      limit 9 offset ${page};
-      `;
+      group by (u.ID);`;
+    // limit 9 offset ${page};
+    //`;
   }
 
   connection.query(sql, (error, rows) => {
@@ -87,16 +87,15 @@ module.exports.Table = (request, response) => {
   var sql = ``;
   var userId = request.params.id;
   var body = request.body;
-  var page = request.params.page * 5; // ta mal
-  console.log(page);
+  //var page = request.params.page * 5; // ta mal
 
   if (body.countries.length == 0 && body.cities.length == 0) {
     sql += `SELECT a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
             FROM ams_dashboard_accommodations a join ams_dashboard_users b
             on user_uid = b.uid
-            where b.id = ${userId}
-            limit 5 offset ${page}
-           `;
+            where b.id = ${userId}`
+            //limit 5 offset ${page}
+           //`;
   } else if (
     (body.countries.length > 0 && body.cities.length == 0) ||
     (body.countries.length > 0 && body.cities.length > 0)
@@ -236,7 +235,9 @@ module.exports.Details = (request, response) => {
             },
           };
         }
-        response.json(obj);
+        rows1 == ""
+          ? response.status(404).json("No matches found")
+          : response.json(obj);
       });
     });
   } catch (error) {
@@ -263,7 +264,9 @@ module.exports.Countries = (request, response) => {
       connection.query(sql, (error, rows) => {
         if (error) response.send(error);
         if (rows == "" || rows1 == "") {
-          response.json("No existen resultados con esta busqueda");
+          return response
+            .status(404)
+            .json("No existen resultados para esta busqueda");
         } else {
           let obj1 = [];
 
