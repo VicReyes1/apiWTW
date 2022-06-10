@@ -28,7 +28,9 @@ module.exports.List = (request, response) => {
     sql = `
       select u.ID, FNAME,LNAME,PHOTOURL, EMAIL, count(COMPLETED_AT) as cmaps, 
       (count(CREATED_AT)-count(COMPLETED_AT)) as ipmaps
-      from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      from ams_dashboard_users u 
+      join ams_dashboard_accommodations a 
+      on u.UID=a.USER_UID
       group by u.id
       order by ${maps} ${order} `;
     //limit 9 offset ${page};
@@ -93,9 +95,9 @@ module.exports.Table = (request, response) => {
     sql += `SELECT a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
             FROM ams_dashboard_accommodations a join ams_dashboard_users b
             on user_uid = b.uid
-            where b.id = ${userId}`
-            //limit 5 offset ${page}
-           //`;
+            where b.id = ${userId}`;
+    //limit 5 offset ${page}
+    //`;
   } else if (
     (body.countries.length > 0 && body.cities.length == 0) ||
     (body.countries.length > 0 && body.cities.length > 0)
@@ -175,7 +177,7 @@ module.exports.Details = (request, response) => {
   where u.ID=${userId}
   group by(u.ID);
   `;
-  
+
   try {
     connection.query(sql2, (error, rows1) => {
       connection.query(sql, (error, rows) => {
