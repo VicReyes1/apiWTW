@@ -250,9 +250,8 @@ module.exports.Details = (request, response) => {
 
 //COUNTRIES WHERE WTW HAS PRESENCE
 module.exports.Countries = (request, response) => {
-  var sql = ` SELECT distinct city FROM dashboard.ams_dashboard_accommodations order by city`;
-  var sql2 = `
-  SELECT distinct country_name FROM dashboard.ams_dashboard_accommodations order by country_name`;
+  var sql = ` SELECT distinct CITY FROM dashboard.ams_dashboard_accommodations order by city`;
+  var sql2 = `SELECT distinct country_name as COUNTRY FROM dashboard.ams_dashboard_accommodations order by country_name`;
   try {
     connection.query(sql2, (error, rows1) => {
       connection.query(sql, (error, rows) => {
