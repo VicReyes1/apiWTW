@@ -79,173 +79,193 @@ module.exports.Over = (request, response) =>{
 }
 
 module.exports.Table = (request,response) =>{
-    var initialDate = request.params.initialDate
-    var finishDate = request.params.finishDate
-    var body = request.body
+    try {
+        var initialDate = request.params.initialDate
+        var finishDate = request.params.finishDate
+        var body = request.body
 
-    
-    var sql = ""
-    if(body.countries.length == 0 && body.cities.length == 0){
-        sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59';`
-    }else if((body.countries.length > 0 && body.cities.length == 0) || (body.countries.length > 0 && body.cities.length > 0)){
-        for (let i = 0; i < body.countries.length; i++) {
-            if(i == (body.countries.length -1)){
-                sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and country_name = '${body.countries[i]}';`
-            }else{
-                sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and country_name = '${body.countries[i]}' union `
+        var filter = ""
+        if (body.filter == "complete") {
+            filter = " and completed_at IS NOT NULL"
+        }else if(body.filter == "non-complete"){
+            filter = " and completed_at IS NULL"
+        }
+        
+        var sql = ""
+        if(body.countries.length == 0 && body.cities.length == 0){
+            sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' ${filter};`
+        }else if((body.countries.length > 0 && body.cities.length == 0) || (body.countries.length > 0 && body.cities.length > 0)){
+            for (let i = 0; i < body.countries.length; i++) {
+                if(i == (body.countries.length -1)){
+                    sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and country_name = '${body.countries[i]}' ${filter};`
+                }else{
+                    sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and country_name = '${body.countries[i]}' ${filter} union `
+                }
+            }
+        }else if(body.countries.length == 0 && body.cities.length > 0){
+            for (let i = 0; i < body.cities.length; i++) {
+                if(i == (body.cities.length -1)){
+                    sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and CITY = '${body.cities[i]}' ${filter};`
+                }else{
+                    sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and CITY = '${body.cities[i]}' ${filter} union `
+                }
             }
         }
-    }else if(body.countries.length == 0 && body.cities.length > 0){
-        for (let i = 0; i < body.cities.length; i++) {
-            if(i == (body.cities.length -1)){
-                sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and CITY = '${body.cities[i]}';`
-            }else{
-                sql += `select * from ams_dashboard_accommodations where created_at >= '${initialDate}' and created_at <= '${finishDate} 23:59:59' and CITY = '${body.cities[i]}' union `
+        
+        
+        connection.query(sql, (error, rows) =>{
+            if (error) 
+                response.send(error)
+            let places = [{}]
+            for (let x = 0; x < rows.length; x++) {
+                places[x] = {
+                    id: rows[x].accommodation_uid,
+                    placeName: rows[x].name,
+                    city: `${rows[x].city}, ${rows[x].country_name}`,
+                    progress: Math.round(rows[x].total * 100)
+                }
+                
+                
             }
-        }
-    }
-    
-    var final = 0
-    var finalF = 0
-    connection.query(sql, (error, rows) =>{
-        if (error) 
-            response.send(error)
-        let places = [{}]
-        for (let x = 0; x < rows.length; x++) {
-            final = (rows[x].building_entrance * 0.20) + (rows[x].elevator * 0.10) + (rows[x].general_attributes * 0.20) + (rows[x].lobby * 0.20) + (final += rows[x].rooms * 0.30)
-            finalF = Math.round(final * 100)
-            places[x] = {
-                id: rows[x].accommodation_uid,
-                placeName: rows[x].name,
-                city: `${rows[x].city}, ${rows[x].country_name}`,
-                progress: finalF
-            }
-            final = 0
-            finalF = 0
+            response.json(places)
+        })
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({
+            type: "Error en el servidor",
+            message: error,
             
-        }
-        response.json(places)
-    })
+        })
+    }
 }
 
 module.exports.Detail = (request,response) => {
-    var uid = request.params.uid
-    var score = 0
-    const arrOfZones = [
-        "building_entrance",
-        "elevator",
-        "general_attributes",
-        "lobby",
-        "rooms"
-    ]
-    var arrScores = []
+    try {
+        var uid = request.params.uid
+        const arrOfZones = [
+            "building_entrance",
+            "elevator",
+            "general_attributes",
+            "lobby",
+            "rooms"
+        ]
+        var arrScores = []
 
-    var objPorcents = [{}]
+        var objPorcents = [{}]
 
-    const consul1D = `SELECT * FROM ams_dashboard_accommodations  JOIN ams_dashboard_users ON  ams_dashboard_accommodations.user_uid = ams_dashboard_users.uid WHERE accommodation_uid = '${uid}';`
+        const consul1D = `SELECT * FROM ams_dashboard_accommodations  JOIN ams_dashboard_users ON  ams_dashboard_accommodations.user_uid = ams_dashboard_users.uid WHERE accommodation_uid = '${uid}';`
 
-    const consul2D = `SELECT completed_at FROM ams_dashboard_replies WHERE accommodation_uid = '${uid}' GROUP BY (completed_at)limit 1;`
+        const consul2D = `SELECT completed_at FROM ams_dashboard_replies WHERE accommodation_uid = '${uid}' GROUP BY (completed_at)limit 1;`
 
-    const consul3D = `SELECT created_at FROM ams_dashboard_replies WHERE accommodation_uid = '${uid}' GROUP BY (created_at)limit 1;`
+        const consul3D = `SELECT created_at FROM ams_dashboard_replies WHERE accommodation_uid = '${uid}' GROUP BY (created_at)limit 1;`
 
-    const consul4D = `SELECT  inquiry_id,avg(CHAR_LENGTH(answers) - CHAR_LENGTH(REPLACE ( answers, 'PHOTO', '1234') )) AS cant FROM ams_dashboard_replies where accommodation_uid = '${uid}' group by(inquiry_id);`
+        const consul4D = `SELECT  inquiry_id,avg(CHAR_LENGTH(answers) - CHAR_LENGTH(REPLACE ( answers, 'PHOTO', '1234') )) AS cant FROM ams_dashboard_replies where accommodation_uid = '${uid}' group by(inquiry_id);`
 
 
-    for (let i = 0; i < arrOfZones.length; i++) {
-        const sql0 = `SELECT ${arrOfZones[i]} as score FROM ams_dashboard_accommodations WHERE accommodation_uid = '${uid}';`
-        connection.query(sql0,(error,rows0) =>{
+        for (let i = 0; i < arrOfZones.length; i++) {
+            const sql0 = `SELECT ${arrOfZones[i]} as score FROM ams_dashboard_accommodations WHERE accommodation_uid = '${uid}';`
+            connection.query(sql0,(error,rows0) =>{
+                if (error) 
+                    response.send(error)
+                if (rows0[0].score == null) {
+                    arrScores[i] = 0
+                }else{
+                    arrScores[i] = Math.round(rows0[0].score* 100)
+                }
+            })
+        }
+
+        var sql = `${consul1D} ${consul2D} ${consul3D} ${consul4D}`
+        connection.query(sql, (error, rows) =>{
             if (error) 
                 response.send(error)
-            if (rows0[0].score == null) {
-                arrScores[i] = 0
-            }else{
-                arrScores[i] = Math.round(rows0[0].score* 100)
+            for (let x = 0; x < arrOfZones.length; x++) {
+                objPorcents[x] = {
+                    name: arrOfZones[x],
+                    process: arrScores[x]
+                }
+                    
             }
+            console.log(arrScores)
+            var last = ""
+            var days = 0
+            if (rows[0][0].completed_at != null) {
+                last = rows[0][0].completed_at
+                
+            }else if(rows[0][0].completed_at == null && rows[1][0] !== undefined ){
+                if (rows[1][0].completed_at != null) {
+                    last = rows[1][0].completed_at
+                }else{
+                    last = "No information"
+                }
+            }
+            else if(rows[0][0].completed_at == null && (rows[1][0] === undefined ) && (rows[2][0] !== undefined)){
+                if (rows[2][0].created_at != null) {
+                    last = rows[2][0].created_at
+                }else{
+                    last = "No information"
+                }
+            }else{
+                last = "No information"
+            }
+
+            if(last != "No information"){
+                days = moment(last).diff(rows[0][0].created_at,'days')
+                if(days == 0){
+                    days = 1
+                }
+            }else{
+                days = moment().diff((rows[0][0].created_at),'days')
+                last = rows[0][0].created_at
+                if(days == 0){
+                    days = 1
+                }
+            }
+
+            if (rows[0][0].photourl == null) {
+                rows[0][0].photourl = "No information"
+            }
+            
+            if (rows[3].length == 0) {
+                rows[3] = "No information"
+            }
+
+            var obj = {
+                
+                    mapper:{
+                        idMapper: rows[0][0].id,
+                        name:rows[0][0].fname,
+                        lastname: rows[0][0].lname,
+                        photo: rows[0][0].photourl
+                    },
+                    accomodation:{
+                        nameHotel: rows[0][0].name,
+                        type: rows[0][0].subtype,
+                        address: rows[0][0].address,
+
+                    },
+                    progress: {
+                        completedpercentage:  Math.round(rows[0][0].total * 100),
+                        created: rows[0][0].created_at,
+                        duration: days,
+                        lastUpdate: last
+
+                    },
+                    progressAreas: objPorcents,
+
+                    photos: rows[3]
+                    
+                }
+            
+            response.json(obj)
+        })
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({
+            type: "Error en el servidor",
+            message: error,
+            
         })
     }
-
-    var sql = `${consul1D} ${consul2D} ${consul3D} ${consul4D}`
-    connection.query(sql, (error, rows) =>{
-        if (error) 
-            response.send(error)
-        for (let x = 0; x < arrOfZones.length; x++) {
-            objPorcents[x] = {
-                name: arrOfZones[x],
-                process: arrScores[x]
-            }
-                
-        }
-        console.log(arrScores)
-        var last = ""
-        var days = 0
-        if (rows[0][0].completed_at != null) {
-            last = rows[0][0].completed_at
-            
-        }else if(rows[0][0].completed_at == null && rows[1][0] !== undefined ){
-            if (rows[1][0].completed_at != null) {
-                last = rows[1][0].completed_at
-            }else{
-                last = "No information"
-            }
-        }
-        else if(rows[0][0].completed_at == null && (rows[1][0] === undefined ) && (rows[2][0] !== undefined)){
-            if (rows[2][0].created_at != null) {
-                last = rows[2][0].created_at
-            }else{
-                last = "No information"
-            }
-        }else{
-            last = "No information"
-        }
-
-        if(last != "No information"){
-            days = moment(last).diff(rows[0][0].created_at,'days')
-            if(days == 0){
-                days = 1
-            }
-        }else{
-            days = moment().diff((rows[0][0].created_at),'days')
-            last = rows[0][0].created_at
-            if(days == 0){
-                days = 1
-            }
-        }
-
-        if (rows[0][0].photourl == null) {
-            rows[0][0].photourl = "No information"
-        }
-        
-        if (rows[3].length == 0) {
-            rows[3] = "No information"
-        }
-
-        var obj = {
-            
-                mapper:{
-                    idMapper: rows[0][0].id,
-                    name:rows[0][0].fname,
-                    lastname: rows[0][0].lname,
-                    photo: rows[0][0].photourl
-                },
-                accomodation:{
-                    nameHotel: rows[0][0].name,
-                    type: rows[0][0].subtype,
-                    address: rows[0][0].address,
-
-                },
-                progress: {
-                    completedpercentage: 68,
-                    created: rows[0][0].created_at,
-                    duration: days,
-                    lastUpdate: last
-
-                },
-                progressAreas: objPorcents,
-
-                photos: rows[3]
-                
-            }
-        
-        response.json(obj)
-    })
+    
 }
