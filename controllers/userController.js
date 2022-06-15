@@ -191,65 +191,70 @@ module.exports.Details = (request, response) => {
     connection.query(sql2, (error, rows1) => {
       connection.query(sql, (error, rows) => {
         if (error) response.send(error);
-
-        let obj = {},
-          x,
-          y;
-
-        if (rows.length == 0) {
-          y = rows.length;
+        if (rows == "" || rows1 == "") {
+          return response
+            .status(404)
+            .json("No existen resultados para esta busqueda");
         } else {
-          y = rows.length;
-          var date = rows[0].UPDATED_AT.toISOString();
-          var YYYY = date.split("-")[0];
-          var MM = date.split("-")[1];
-          var D = date.split("-")[2];
-          var DD = D[0];
-          var DD = DD + D[1];
-          var HH = date.split("T")[1];
-          var HH = HH.split(".")[0];
-          var inqid = rows[0].INQUIRY_ID;
-          var nomh = rows[0].name;
-          var ciudad = rows[0].CITY;
-          var country = rows[0].country_name;
-        }
+          let obj = {},
+            x,
+            y;
 
-        for (x = 0; x < y; x++) {
-          obj = {
-            name: {
-              name: rows1[x].FNAME,
-              lname: rows1[x].LNAME,
-              photo: rows1[x].PHOTOURL,
-            },
-            contributions: {
-              total: rows1[x].completed,
-              WTWcontributions: "Pending",
-              inprogress: rows1[x].inProgress,
-              averageTime: rows1[x].days,
-            },
-            replies: {
-              lastReply: {
-                day: DD || "unavailable",
-                month: MM || "unavailable",
-                year: YYYY || "unavailable",
-                hour: HH || "unavailable",
+          if (rows.length == 0) {
+            y = rows.length;
+          } else {
+            y = rows.length;
+            var date = rows[0].UPDATED_AT.toISOString();
+            var YYYY = date.split("-")[0];
+            var MM = date.split("-")[1];
+            var D = date.split("-")[2];
+            var DD = D[0];
+            var DD = DD + D[1];
+            var HH = date.split("T")[1];
+            var HH = HH.split(".")[0];
+            var inqid = rows[0].INQUIRY_ID;
+            var nomh = rows[0].name;
+            var ciudad = rows[0].CITY;
+            var country = rows[0].country_name;
+          }
+
+          for (x = 0; x < y; x++) {
+            obj = {
+              name: {
+                name: rows1[x].FNAME,
+                lname: rows1[x].LNAME,
+                photo: rows1[x].PHOTOURL,
               },
-              lastCompletedArea: {
-                Area: inqid || "unavailable",
-                location: {
-                  name: nomh || "unavailable",
+              contributions: {
+                total: rows1[x].completed,
+                WTWcontributions: "Pending",
+                inprogress: rows1[x].inProgress,
+                averageTime: rows1[x].days,
+              },
+              replies: {
+                lastReply: {
+                  day: DD || "unavailable",
+                  month: MM || "unavailable",
+                  year: YYYY || "unavailable",
+                  hour: HH || "unavailable",
+                },
+                lastCompletedArea: {
+                  Area: inqid || "unavailable",
                   location: {
-                    city: ciudad || "unavailable",
-                    country: country || "unavailable",
+                    name: nomh || "unavailable",
+                    location: {
+                      city: ciudad || "unavailable",
+                      country: country || "unavailable",
+                    },
                   },
                 },
               },
-            },
-          };
+            };
+          }
+          rows1 == ""
+            ? response.status(404).json("No matches found")
+            : response.json(obj);
         }
-        rows1 == ""
-          ? response.status(404).json("No matches found")
-          : response.json(obj);
       });
     });
   } catch (error) {
