@@ -21,23 +21,23 @@ app.use(express.json());
 
 //-----------Middleware Auth to protect routes. Uncomment to test.------------
 
-// app.use(async (req, res, next)=>{
-//     const header = req.headers?.authorization;
-//     let token;
+app.use(async (req, res, next)=>{
+    const header = req.headers?.authorization;
+    let token;
 
-//     if(!!header && header.startsWith("Bearer ")){
-//         token = header.substring(7, header.length);
-//     }
+    if(!!header && header.startsWith("Bearer ")){
+        token = header.substring(7, header.length);
+    }
 
-//     try {
-//         const decodedToken = await auth.verifyIdToken(token);
-//         req.user = decodedToken;
-//         next();
-//     } catch (error) {
-//         res.sendStatus(403)
-//         console.log(error)
-//     }
-// })
+    try {
+        const decodedToken = await auth.verifyIdToken(token);
+        req.user = decodedToken;
+        next();
+    } catch (error) {
+        res.sendStatus(403)
+        console.log(error)
+    }
+})
 
 app.use('/mappers',usuario)
 app.use('/maps',maps)
