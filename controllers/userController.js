@@ -51,24 +51,28 @@ module.exports.List = (request, response) => {
   connection.query(sql, (error, rows) => {
     try {
       let obj = [{}];
-      for (let x = 0; x < rows.length; x++) {
-        obj[x] = {
-          name: {
-            id: rows[x].ID,
-            name: rows[x].FNAME,
-            lname: rows[x].LNAME,
-            photo: rows[x].PHOTOURL,
-          },
-          maps: {
-            done: rows[x].cmaps,
-            progress: rows[x].ipmaps,
-          },
-          contact: rows[x].EMAIL,
-        };
+      if (rows == "") {
+        response.status(404).json("No matches found");
+      } else {
+        for (let x = 0; x < rows.length; x++) {
+          obj[x] = {
+            name: {
+              id: rows[x].ID,
+              name: rows[x].FNAME,
+              lname: rows[x].LNAME,
+              photo: rows[x].PHOTOURL,
+            },
+            maps: {
+              done: rows[x].cmaps,
+              progress: rows[x].ipmaps,
+            },
+            contact: rows[x].EMAIL,
+          };
+        }
+        rows == ""
+          ? response.status(404).json("No matches found")
+          : response.json(obj);
       }
-      rows == ""
-        ? response.status(404).json("No matches found")
-        : response.json(obj);
     } catch (error) {
       return response.status(400).json("Bad request");
     }
@@ -141,19 +145,21 @@ module.exports.Table = (request, response) => {
       if (error) response.send(error);
 
       let obj = [{}];
-
-      for (let x = 0; x < rows.length; x++) {
-        obj[x] = {
-          id: rows[x].ACC_ID,
-          placeName: rows[x].NAME,
-          city: `${rows[x].CITY}, ${rows[x].country_name}`,
-          progress: Math.round(rows[x].total * 100),
-        };
+      if (rows == "") {
+        response.status(404).json("No matches found");
+      } else {
+        for (let x = 0; x < rows.length; x++) {
+          obj[x] = {
+            id: rows[x].ACC_ID,
+            placeName: rows[x].NAME,
+            city: `${rows[x].CITY}, ${rows[x].country_name}`,
+            progress: Math.round(rows[x].total * 100),
+          };
+        }
+        rows == ""
+          ? response.status(404).json("No matches found")
+          : response.json(obj);
       }
-
-      rows == ""
-        ? response.status(404).json("No matches found")
-        : response.json(obj);
     });
   } catch (error) {
     return response.status(400).json("Bad request");
