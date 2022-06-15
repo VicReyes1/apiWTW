@@ -82,13 +82,22 @@ module.exports.Table = (request, response) => {
   var sql = ``;
   var userId = request.params.id;
   var body = request.body;
-  //var page = request.params.page * 5; 
+  //var page = request.params.page * 5;
+
+  var filter = "";
+  if (body.filter == "complete") {
+    filter = " and completed_at IS NOT NULL";
+  } else if (body.filter == "non-complete") {
+    filter = " and completed_at IS NULL";
+  }
 
   if (body.countries.length == 0 && body.cities.length == 0) {
     sql += `SELECT a.total ,a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
             FROM ams_dashboard_accommodations a join ams_dashboard_users b
             on user_uid = b.uid
-            where b.id = ${userId}`;
+            where b.id = ${userId}
+            ${filter}
+            `;
     //limit 5 offset ${page}
     //`;
   } else if (
@@ -100,13 +109,13 @@ module.exports.Table = (request, response) => {
         sql += `select distinct a.total, a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and country_name = '${body.countries[i]}' 
+                where u.id= ${userId} and country_name = '${body.countries[i]}' ${filter}
                 order by(r.UPDATED_AT)`;
       } else {
         sql += `select distinct a.total , a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and country_name = '${body.countries[i]}' 
+                where u.id= ${userId} and country_name = '${body.countries[i]}' ${filter}
                 order by(r.UPDATED_AT) union`;
       }
     }
@@ -116,13 +125,13 @@ module.exports.Table = (request, response) => {
         sql += `select distinct a.total , a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and a.CITY = '${body.cities[i]}' 
+                where u.id= ${userId} and a.CITY = '${body.cities[i]}' ${filter}
                 order by(r.UPDATED_AT)`;
       } else {
         sql += `select distinct a.total ,a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and a.CITY ='${body.cities[i]}' 
+                where u.id= ${userId} and a.CITY ='${body.cities[i]}' ${filter}
                 order by(r.UPDATED_AT) union`;
       }
     }
@@ -138,7 +147,7 @@ module.exports.Table = (request, response) => {
           id: rows[x].ACC_ID,
           placeName: rows[x].NAME,
           city: `${rows[x].CITY}, ${rows[x].country_name}`,
-          progress: rows[x].total,
+          progress: Math.round(rows[x].total * 100),
         };
       }
 
