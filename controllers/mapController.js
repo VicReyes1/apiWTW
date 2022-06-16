@@ -23,9 +23,9 @@ module.exports.Over = (request, response) =>{
 
         const consul4 = 'select country_name,count(NAME) as cantidad from ams_dashboard_accommodations where COMPLETED_AT is not null group by(country_name) order by cantidad DESC limit 10;'
 
-        const consul5 = 'select count (distinct country_name) as paisesC from ams_dashboard_accommodations; '
+        const consul5 = 'select count (distinct country_name) as paisesC from ams_dashboard_accommodations where completed_at is not null; '
 
-        const consul6 = 'select count (distinct city) as ciudadesC from ams_dashboard_accommodations;'
+        const consul6 = 'select count (distinct LOWER(city)) as ciudadesC from ams_dashboard_accommodations;'
 
         const consul7 = 'select sum(TIMESTAMPDIFF(DAY,CREATED_AT,COMPLETED_AT))/count(*) as days from ams_dashboard_accommodations where COMPLETED_AT is not null;'
 
