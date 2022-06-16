@@ -188,22 +188,23 @@ module.exports.Details = (request, response) => {
   `;
 
   try {
-    connection.query(sql2, (error, rows1) => {
-      connection.query(sql, (error, rows) => {
-        if (error) response.send(error);
-        if (rows == "" || rows1 == "") {
+    connection.query(sql, (error, rows) => {
+      connection.query(sql2, (error, rows1) => {
+        if (error) {
+          if (error.code === "ER_BAD_FIELD_ERROR") {
+            return response
+              .status(400)
+              .json("Bad request");
+          }
+          response.send(error);
+        }
+        if (rows1 == "" && rows == "") {
           return response
             .status(404)
             .json("No existen resultados para esta busqueda");
         } else {
-          let obj = {},
-            x,
-            y;
-
-          if (rows.length == 0) {
-            y = rows.length;
-          } else {
-            y = rows.length;
+          var x = 0;
+          if (rows != 0) {
             var date = rows[0].UPDATED_AT.toISOString();
             var YYYY = date.split("-")[0];
             var MM = date.split("-")[1];
@@ -216,9 +217,23 @@ module.exports.Details = (request, response) => {
             var nomh = rows[0].name;
             var ciudad = rows[0].CITY;
             var country = rows[0].country_name;
+          } else {
+            var date = "undefined";
+            var YYYY = "undefined";
+            var MM = "undefined";
+            var D = "undefined";
+            var DD = "undefined";
+            var DD = "undefined";
+            var HH = "undefined";
+            var HH = "undefined";
+            var inqid = "undefined";
+            var nomh = "undefined";
+            var ciudad = "undefined";
+            var country = "undefined";
           }
 
-          for (x = 0; x < y; x++) {
+          let obj = {};
+          for (x = 0; x < rows1.length; x++) {
             obj = {
               name: {
                 name: rows1[x].FNAME,
@@ -233,27 +248,25 @@ module.exports.Details = (request, response) => {
               },
               replies: {
                 lastReply: {
-                  day: DD || "unavailable",
-                  month: MM || "unavailable",
-                  year: YYYY || "unavailable",
-                  hour: HH || "unavailable",
+                  day: DD,
+                  month: MM,
+                  year: YYYY,
+                  hour: HH,
                 },
                 lastCompletedArea: {
-                  Area: inqid || "unavailable",
+                  Area: inqid,
                   location: {
-                    name: nomh || "unavailable",
+                    name: nomh,
                     location: {
-                      city: ciudad || "unavailable",
-                      country: country || "unavailable",
+                      city: ciudad,
+                      country: country,
                     },
                   },
                 },
               },
             };
+            response.json(obj);
           }
-          rows1 == ""
-            ? response.status(404).json("No matches found")
-            : response.json(obj);
         }
       });
     });
