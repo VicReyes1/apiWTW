@@ -23,9 +23,9 @@ module.exports.Over = (request, response) =>{
 
         const consul4 = 'select country_name,count(NAME) as cantidad from ams_dashboard_accommodations where COMPLETED_AT is not null group by(country_name) order by cantidad DESC limit 10;'
 
-        const consul5 = 'select count (distinct country_name) as paisesC from ams_dashboard_accommodations; '
+        const consul5 = 'select count (distinct country_name) as paisesC from ams_dashboard_accommodations where completed_at is not null; '
 
-        const consul6 = 'select count (distinct city) as ciudadesC from ams_dashboard_accommodations;'
+        const consul6 = 'select count (distinct LOWER(city)) as ciudadesC from ams_dashboard_accommodations;'
 
         const consul7 = 'select sum(TIMESTAMPDIFF(DAY,CREATED_AT,COMPLETED_AT))/count(*) as days from ams_dashboard_accommodations where COMPLETED_AT is not null;'
 
@@ -41,9 +41,7 @@ module.exports.Over = (request, response) =>{
         connection.query(sql, (error, rows) =>{
             if (error) 
                 response.send(error)
-            if(rows == ""){
-                response.status(404).json("No matches found")
-            }
+            
             var newDates = []
             for (let i = rows[8].length - 1; i >= 0; i--) {
                 newDates.push(rows[8][i])
@@ -67,9 +65,7 @@ module.exports.Over = (request, response) =>{
                 },
 
             }
-            
             response.json(obj)
-            
         })
     }catch(error){
         console.log(error)
@@ -120,20 +116,18 @@ module.exports.Table = (request,response) =>{
         connection.query(sql, (error, rows) =>{
             if (error) 
                 response.send(error)
-            if(rows == ""){
-                response.status(404).json("No matches found")
-            }else{
-                let places = [{}]
-                for (let x = 0; x < rows.length; x++) {
-                    places[x] = {
-                        id: rows[x].accommodation_uid,
-                        placeName: rows[x].name,
-                        city: `${rows[x].city}, ${rows[x].country_name}`,
-                        progress: Math.round(rows[x].total * 100)
-                    } 
+            let places = [{}]
+            for (let x = 0; x < rows.length; x++) {
+                places[x] = {
+                    id: rows[x].accommodation_uid,
+                    placeName: rows[x].name,
+                    city: `${rows[x].city}, ${rows[x].country_name}`,
+                    progress: Math.round(rows[x].total * 100)
                 }
-                response.json(places)
+                
+                
             }
+            response.json(places)
         })
     } catch (error) {
         console.log(error)
@@ -146,8 +140,8 @@ module.exports.Table = (request,response) =>{
 }
 
 module.exports.Detail = (request,response) => {
-    var allowToContinue = false
-    var uid = request.params.uid
+    try {
+        var uid = request.params.uid
         const arrOfZones = [
             "building_entrance",
             "elevator",
@@ -159,35 +153,6 @@ module.exports.Detail = (request,response) => {
 
         var objPorcents = [{}]
 
-    try {
-        for (let i = 0; i < arrOfZones.length; i++) {
-            const sql0 = `SELECT ${arrOfZones[i]} as score FROM ams_dashboard_accommodations WHERE accommodation_uid = '${uid}';`
-            connection.query(sql0,(error,rows0) =>{
-                if (error) 
-                    response.send(error)
-                if(rows0.length == 0){
-                    allowToContinue = false
-                }else{
-                    allowToContinue == true
-                    if (rows0[0].score == null) {
-                        arrScores[i] = 0
-                    }else{
-                        arrScores[i] = Math.round(rows0[0].score* 100)
-                    }
-                    
-                }
-            })
-        }
-    } catch (error) {
-        console.log(error)
-        return response.status(500).json({
-            type: "Error en el servidor",
-            message: error,
-            
-        })
-    }
-    try {
-
         const consul1D = `SELECT * FROM ams_dashboard_accommodations  JOIN ams_dashboard_users ON  ams_dashboard_accommodations.user_uid = ams_dashboard_users.uid WHERE accommodation_uid = '${uid}';`
 
         const consul2D = `SELECT completed_at FROM ams_dashboard_replies WHERE accommodation_uid = '${uid}' GROUP BY (completed_at)limit 1;`
@@ -195,96 +160,105 @@ module.exports.Detail = (request,response) => {
         const consul3D = `SELECT created_at FROM ams_dashboard_replies WHERE accommodation_uid = '${uid}' GROUP BY (created_at)limit 1;`
 
         const consul4D = `SELECT  inquiry_id,avg(CHAR_LENGTH(answers) - CHAR_LENGTH(REPLACE ( answers, 'PHOTO', '1234') )) AS cant FROM ams_dashboard_replies where accommodation_uid = '${uid}' group by(inquiry_id);`
-            var sql = `${consul1D} ${consul2D} ${consul3D} ${consul4D}`
-            connection.query(sql, (error, rows) =>{
+
+
+        for (let i = 0; i < arrOfZones.length; i++) {
+            const sql0 = `SELECT ${arrOfZones[i]} as score FROM ams_dashboard_accommodations WHERE accommodation_uid = '${uid}';`
+            connection.query(sql0,(error,rows0) =>{
                 if (error) 
                     response.send(error)
-                    if (arrScores.length == 0) {
-                        return response.status(404).json({
-                            type: "User Error",
-                            message: "No matching resources",
-                            
-                        })
-                    }
-                        for (let x = 0; x < arrOfZones.length; x++) {
-                            objPorcents[x] = {
-                                name: arrOfZones[x],
-                                process: arrScores[x]
-                            }
-                                
-                        }
-                        var last = ""
-                        var days = 0
-                        if (rows[0][0].completed_at != null) {
-                            last = rows[0][0].completed_at
-                            
-                        }else if(rows[0][0].completed_at == null && rows[1][0] !== undefined ){
-                            if (rows[1][0].completed_at != null) {
-                                last = rows[1][0].completed_at
-                            }else{
-                                last = "No information"
-                            }
-                        }
-                        else if(rows[0][0].completed_at == null && (rows[1][0] === undefined ) && (rows[2][0] !== undefined)){
-                            if (rows[2][0].created_at != null) {
-                                last = rows[2][0].created_at
-                            }else{
-                                last = "No information"
-                            }
-                        }else{
-                            last = "No information"
-                        }
-            
-                        if(last != "No information"){
-                            days = moment(last).diff(rows[0][0].created_at,'days')
-                            if(days == 0){
-                                days = 1
-                            }
-                        }else{
-                            days = moment().diff((rows[0][0].created_at),'days')
-                            last = rows[0][0].created_at
-                            if(days == 0){
-                                days = 1
-                            }
-                        }
-            
-                        if (rows[0][0].photourl == null) {
-                            rows[0][0].photourl = "No information"
-                        }
-                        
-                        if (rows[3].length == 0) {
-                            rows[3] = "No information"
-                        }
-            
-                        var obj = {
-                            
-                                mapper:{
-                                    idMapper: rows[0][0].id,
-                                    name:rows[0][0].fname,
-                                    lastname: rows[0][0].lname,
-                                    photo: rows[0][0].photourl
-                                },
-                                accomodation:{
-                                    nameHotel: rows[0][0].name,
-                                    type: rows[0][0].subtype,
-                                    address: rows[0][0].address,
-            
-                                },
-                                progress: {
-                                    completedpercentage:  Math.round(rows[0][0].total * 100),
-                                    created: rows[0][0].created_at,
-                                    duration: days,
-                                    lastUpdate: last
-            
-                                },
-                                progressAreas: objPorcents,
-            
-                                photos: rows[3]
-                                
-                            }
-                        
-                    response.json(obj)
+                if (rows0[0].score == null) {
+                    arrScores[i] = 0
+                }else{
+                    arrScores[i] = Math.round(rows0[0].score* 100)
+                }
             })
+        }
+
+        var sql = `${consul1D} ${consul2D} ${consul3D} ${consul4D}`
+        connection.query(sql, (error, rows) =>{
+            if (error) 
+                response.send(error)
+            for (let x = 0; x < arrOfZones.length; x++) {
+                objPorcents[x] = {
+                    name: arrOfZones[x],
+                    process: arrScores[x]
+                }
+                    
+            }
+            console.log(arrScores)
+            var last = ""
+            var days = 0
+            if (rows[0][0].completed_at != null) {
+                last = rows[0][0].completed_at
+                
+            }else if(rows[0][0].completed_at == null && rows[1][0] !== undefined ){
+                if (rows[1][0].completed_at != null) {
+                    last = rows[1][0].completed_at
+                }else{
+                    last = "No information"
+                }
+            }
+            else if(rows[0][0].completed_at == null && (rows[1][0] === undefined ) && (rows[2][0] !== undefined)){
+                if (rows[2][0].created_at != null) {
+                    last = rows[2][0].created_at
+                }else{
+                    last = "No information"
+                }
+            }else{
+                last = "No information"
+            }
+
+            if(last != "No information"){
+                days = moment(last).diff(rows[0][0].created_at,'days')
+                if(days == 0){
+                    days = 1
+                }
+            }else{
+                days = moment().diff((rows[0][0].created_at),'days')
+                last = rows[0][0].created_at
+                if(days == 0){
+                    days = 1
+                }
+            }
+
+            if (rows[0][0].photourl == null) {
+                rows[0][0].photourl = "No information"
+            }
+            
+            if (rows[3].length == 0) {
+                rows[3] = "No information"
+            }
+
+            var obj = {
+                
+                    mapper:{
+                        idMapper: rows[0][0].id,
+                        name:rows[0][0].fname,
+                        lastname: rows[0][0].lname,
+                        photo: rows[0][0].photourl
+                    },
+                    accomodation:{
+                        nameHotel: rows[0][0].name,
+                        type: rows[0][0].subtype,
+                        address: rows[0][0].address,
+
+                    },
+                    progress: {
+                        completedpercentage:  Math.round(rows[0][0].total * 100),
+                        created: rows[0][0].created_at,
+                        duration: days,
+                        lastUpdate: last
+
+                    },
+                    progressAreas: objPorcents,
+
+                    photos: rows[3]
+                    
+                }
+            
+            response.json(obj)
+        })
     } catch (error) {
         console.log(error)
         return response.status(500).json({
