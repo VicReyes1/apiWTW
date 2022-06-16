@@ -49,6 +49,12 @@ module.exports.List = (request, response) => {
   }
 
   connection.query(sql, (error, rows) => {
+    if (error) {
+      if (error.code === "ER_BAD_FIELD_ERROR") {
+        return response.status(400).json("Bad request");
+      }
+      response.send(error);
+    }
     try {
       let obj = [{}];
       if (rows == "") {
@@ -142,7 +148,12 @@ module.exports.Table = (request, response) => {
   }
   try {
     connection.query(sql, (error, rows) => {
-      if (error) response.send(error);
+      if (error) {
+        if (error.code === "ER_BAD_FIELD_ERROR") {
+          return response.status(400).json("Bad request");
+        }
+        response.send(error);
+      }
 
       let obj = [{}];
       if (rows == "") {
@@ -282,7 +293,12 @@ module.exports.Countries = (request, response) => {
   try {
     connection.query(sql2, (error, rows1) => {
       connection.query(sql, (error, rows) => {
-        if (error) response.send(error);
+        if (error) {
+          if (error.code === "ER_BAD_FIELD_ERROR") {
+            return response.status(400).json("Bad request");
+          }
+          response.send(error);
+        }
         if (rows == "" || rows1 == "") {
           return response
             .status(404)
