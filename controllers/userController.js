@@ -8,13 +8,6 @@ connection.connect((error) => {
   console.log("conexion exitosa USER");
 });
 
-/*
-TODO 
-implementar offset en demas endpoints Zzzzz
-queries vacias 404 
-hacer pruebas con offset pipisiado 
-*/
-
 //MAPPERS OVERVIEW
 module.exports.List = (request, response) => {
   //URI format -> http://localhost:9000/mappers/overview?maps=ipmaps&order=asc&page=3
@@ -58,24 +51,28 @@ module.exports.List = (request, response) => {
   connection.query(sql, (error, rows) => {
     try {
       let obj = [{}];
-      for (let x = 0; x < rows.length; x++) {
-        obj[x] = {
-          name: {
-            id: rows[x].ID,
-            name: rows[x].FNAME,
-            lname: rows[x].LNAME,
-            photo: rows[x].PHOTOURL,
-          },
-          maps: {
-            done: rows[x].cmaps,
-            progress: rows[x].ipmaps,
-          },
-          contact: rows[x].EMAIL,
-        };
+      if (rows == "") {
+        response.status(404).json("No matches found");
+      } else {
+        for (let x = 0; x < rows.length; x++) {
+          obj[x] = {
+            name: {
+              id: rows[x].ID,
+              name: rows[x].FNAME,
+              lname: rows[x].LNAME,
+              photo: rows[x].PHOTOURL,
+            },
+            maps: {
+              done: rows[x].cmaps,
+              progress: rows[x].ipmaps,
+            },
+            contact: rows[x].EMAIL,
+          };
+        }
+        rows == ""
+          ? response.status(404).json("No matches found")
+          : response.json(obj);
       }
-      rows == ""
-        ? response.status(404).json("No matches found")
-        : response.json(obj);
     } catch (error) {
       return response.status(400).json("Bad request");
     }
@@ -89,13 +86,22 @@ module.exports.Table = (request, response) => {
   var sql = ``;
   var userId = request.params.id;
   var body = request.body;
-  //var page = request.params.page * 5; // ta mal
+  //var page = request.params.page * 5;
+
+  var filter = "";
+  if (body.filter == "complete") {
+    filter = " and completed_at IS NOT NULL";
+  } else if (body.filter == "non-complete") {
+    filter = " and completed_at IS NULL";
+  }
 
   if (body.countries.length == 0 && body.cities.length == 0) {
-    sql += `SELECT a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
+    sql += `SELECT a.total ,a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
             FROM ams_dashboard_accommodations a join ams_dashboard_users b
             on user_uid = b.uid
-            where b.id = ${userId}`;
+            where b.id = ${userId}
+            ${filter}
+            `;
     //limit 5 offset ${page}
     //`;
   } else if (
@@ -104,32 +110,32 @@ module.exports.Table = (request, response) => {
   ) {
     for (let i = 0; i < body.countries.length; i++) {
       if (i == body.countries.length - 1) {
-        sql += `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+        sql += `select distinct a.total, a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and country_name = '${body.countries[i]}' 
+                where u.id= ${userId} and country_name = '${body.countries[i]}' ${filter}
                 order by(r.UPDATED_AT)`;
       } else {
-        sql += `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+        sql += `select distinct a.total , a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and country_name = '${body.countries[i]}' 
+                where u.id= ${userId} and country_name = '${body.countries[i]}' ${filter}
                 order by(r.UPDATED_AT) union`;
       }
     }
   } else if (body.countries.length == 0 && body.cities.length > 0) {
     for (let i = 0; i < body.cities.length; i++) {
       if (i == body.cities.length - 1) {
-        sql += `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+        sql += `select distinct a.total , a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and a.CITY = '${body.cities[i]}' 
+                where u.id= ${userId} and a.CITY = '${body.cities[i]}' ${filter}
                 order by(r.UPDATED_AT)`;
       } else {
-        sql += `select distinct a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+        sql += `select distinct a.total ,a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and a.CITY ='${body.cities[i]}' 
+                where u.id= ${userId} and a.CITY ='${body.cities[i]}' ${filter}
                 order by(r.UPDATED_AT) union`;
       }
     }
@@ -139,22 +145,24 @@ module.exports.Table = (request, response) => {
       if (error) response.send(error);
 
       let obj = [{}];
-
-      for (let x = 0; x < rows.length; x++) {
-        obj[x] = {
-          id: rows[x].ACC_ID,
-          placeName: rows[x].NAME,
-          city: `${rows[x].CITY}, ${rows[x].country_name}`,
-          progress: 0, //TODO: implementar progreso
-        };
+      if (rows == "") {
+        response.status(404).json("No matches found");
+      } else {
+        for (let x = 0; x < rows.length; x++) {
+          obj[x] = {
+            id: rows[x].ACC_ID,
+            placeName: rows[x].NAME,
+            city: `${rows[x].CITY}, ${rows[x].country_name}`,
+            progress: Math.round(rows[x].total * 100),
+          };
+        }
+        rows == ""
+          ? response.status(404).json("No matches found")
+          : response.json(obj);
       }
-
-      rows == ""
-        ? response.status(404).json("No matches found")
-        : response.json(obj);
     });
   } catch (error) {
-    return response.status(400).json({ error: error.toString() });
+    return response.status(400).json("Bad request");
   }
 };
 
@@ -162,10 +170,11 @@ module.exports.Table = (request, response) => {
 module.exports.Details = (request, response) => {
   var userId = request.params.id;
   var sql = `
-  select a.name, r.CREATED_AT,INQUIRY_ID,ADDRESS,a.country_name,a.CITY
+  select a.name,r.UPDATED_AT,INQUIRY_ID,ADDRESS,a.country_name,a.CITY
   from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
   join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
   where u.ID=${userId}
+  order by r.UPDATED_AT desc
   limit 1;
   `;
 
@@ -182,65 +191,70 @@ module.exports.Details = (request, response) => {
     connection.query(sql2, (error, rows1) => {
       connection.query(sql, (error, rows) => {
         if (error) response.send(error);
-
-        let obj = {},
-          x,
-          y;
-
-        if (rows.length == 0) {
-          y = rows1.length;
+        if (rows == "" || rows1 == "") {
+          return response
+            .status(404)
+            .json("No existen resultados para esta busqueda");
         } else {
-          y = rows.length;
-          var date = rows[0].CREATED_AT.toISOString();
-          var YYYY = date.split("-")[0];
-          var MM = date.split("-")[1];
-          var D = date.split("-")[2];
-          var DD = D[0];
-          var DD = DD + D[1];
-          var HH = date.split("T")[1];
-          var HH = HH.split(".")[0];
-          var inqid = rows[0].INQUIRY_ID;
-          var nomh = rows[0].name;
-          var ciudad = rows[0].CITY;
-          var country = rows[0].country_name;
-        }
+          let obj = {},
+            x,
+            y;
 
-        for (x = 0; x < y; x++) {
-          obj = {
-            name: {
-              name: rows1[x].FNAME,
-              lname: rows1[x].LNAME,
-              photo: rows1[x].PHOTOURL,
-            },
-            contributions: {
-              total: rows1[x].completed,
-              WTWcontributions: "Pending",
-              inprogress: rows1[x].inProgress,
-              averageTime: rows1[x].days,
-            },
-            replies: {
-              lastReply: {
-                day: DD || "unavailable",
-                month: MM || "unavailable",
-                year: YYYY || "unavailable",
-                hour: HH || "unavailable",
+          if (rows.length == 0) {
+            y = rows.length;
+          } else {
+            y = rows.length;
+            var date = rows[0].UPDATED_AT.toISOString();
+            var YYYY = date.split("-")[0];
+            var MM = date.split("-")[1];
+            var D = date.split("-")[2];
+            var DD = D[0];
+            var DD = DD + D[1];
+            var HH = date.split("T")[1];
+            var HH = HH.split(".")[0];
+            var inqid = rows[0].INQUIRY_ID;
+            var nomh = rows[0].name;
+            var ciudad = rows[0].CITY;
+            var country = rows[0].country_name;
+          }
+
+          for (x = 0; x < y; x++) {
+            obj = {
+              name: {
+                name: rows1[x].FNAME,
+                lname: rows1[x].LNAME,
+                photo: rows1[x].PHOTOURL,
               },
-              lastCompletedArea: {
-                Area: inqid || "unavailable",
-                location: {
-                  name: nomh || "unavailable",
+              contributions: {
+                total: rows1[x].completed,
+                WTWcontributions: "Pending",
+                inprogress: rows1[x].inProgress,
+                averageTime: rows1[x].days,
+              },
+              replies: {
+                lastReply: {
+                  day: DD || "unavailable",
+                  month: MM || "unavailable",
+                  year: YYYY || "unavailable",
+                  hour: HH || "unavailable",
+                },
+                lastCompletedArea: {
+                  Area: inqid || "unavailable",
                   location: {
-                    city: ciudad || "unavailable",
-                    country: country || "unavailable",
+                    name: nomh || "unavailable",
+                    location: {
+                      city: ciudad || "unavailable",
+                      country: country || "unavailable",
+                    },
                   },
                 },
               },
-            },
-          };
+            };
+          }
+          rows1 == ""
+            ? response.status(404).json("No matches found")
+            : response.json(obj);
         }
-        rows1 == ""
-          ? response.status(404).json("No matches found")
-          : response.json(obj);
       });
     });
   } catch (error) {
