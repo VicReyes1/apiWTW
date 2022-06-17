@@ -220,7 +220,7 @@ module.exports.Details = (request, response) => {
             var HH = HH.split(".")[0];
             var inqid = rows[0].INQUIRY_ID;
             var nomh = rows[0].name;
-            var ciudad = rows[0].CITY;
+            var ciudad = rows[0].city;
             var country = rows[0].country_name;
           } else {
             var date = "undefined";
