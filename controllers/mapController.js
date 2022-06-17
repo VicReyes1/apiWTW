@@ -236,7 +236,7 @@ module.exports.Detail = (request,response) => {
             
                         if(last != "No information"){
                             if(days == 0){
-                                days = 1
+                                days = moment().diff((rows[0][0].created_at),'days')
                             }
                         }
             
