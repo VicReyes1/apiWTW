@@ -235,6 +235,9 @@ module.exports.Detail = (request,response) => {
             
                         if(last != "No information"){
                             if(days == 0 && rows[0][0].completed_at == null){
+                                if (last == "") {
+                                    last = rows[0][0].created_at
+                                }
                                 days = moment().diff((rows[0][0].created_at),'days')
                             }else if(days == 0 && rows[0][0].completed_at != null){
                                 var days2 = moment(rows[0][0].completed_at).diff((rows[0][0].created_at),'days')
@@ -245,7 +248,6 @@ module.exports.Detail = (request,response) => {
                                 }
                             }
                         }else{
-                            last = rows[0][0].created_at
                             days = moment().diff((rows[0][0].created_at),'days')
                         }
             
