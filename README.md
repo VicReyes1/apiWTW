@@ -12,7 +12,7 @@ Below is a screenshot of the Database used to query data for this API.
 ## Available endpoints (API Documentation)
 
 ### Maps Overview
- Obtiene la información de el overview, el cual consta de summary (afectado por initialDate e finishDate), el cual contiene los ampeos en porgreso y completados, y all Time estadistics (no afectado por las fechas), esta parte contiene los paises con mayores mapeos, el top 10 de esos paies, en cuantos paises esta la empresa (countryNumber), cantidad ciudades donde tienen presencia(destinationNumber), promedio de fotos por mapeo (avgNumberOfPhotos), nombre de áreas menos mapeadas (leastMappedAreas), el promedio de tiempo que se tardan en completar un mapeo(avgTimeCompletionPerMap) y por mes la cantidad de mapas completados (completedAMSMaps).
+Gets de general overview information, which includes the **completed maps summary** affected by the date picker and all time statistics (not affected by the date). All Time Statistics includes **worldwide data of the organization**, **average number of photos per mapp**, **least mapped areas**, **average completion time** and data to fill the **yearly history graphic**.
  
 **URL:** `https://apidash2.herokuapp.com/maps/overview/{initalDate}/{finisDate}`
 
@@ -118,14 +118,15 @@ Below is a screenshot of the Database used to query data for this API.
  
 
 ### Maps Table
-Obtiene la información de todos los accomodations, afectados por la fecha (:initialDate y :finishDate), el body que recibe se puede decir que es una form de los filtros aplicados.
+Gets all the accommodations list affected by the date picker(:initialDate & :finishDate) and other filters. It is used as a POST method to be able to send filter data according to the expected body explained below.
 
 **URL:** `https://apidash2.herokuapp.com/maps/table/{initialDate}/{finishDate}`
 
 **Method:** `POST`
 
- **Expected Body** 
-Como body recibe los parámetros de los filtros, en country recibe las ciudades a filtrar dentro del arreglo de igual manera en cities un arreglo con todas las ciudades a filtrar, y el filter una palabra clave ya sea complete o non-complete para el filtro de completados o no.
+ **Expected Body**
+ 
+As a JSON body, it is needed to send an object with three properties inside: an array of countries, an array of cities and a string that can be "complete"/"non-complete"
   
   ```json 
   {
@@ -149,7 +150,7 @@ Como body recibe los parámetros de los filtros, en country recibe las ciudades 
 
 
 ### Map Details
-Description: Obtiene información detallada de un accomodation en espécifico, tal cual como el mapper que lo mapeo, el tiempo de mapeo esto incluye la fecha de inicio, la fecha de termino o last update, y la cantidad de días que se tardo, así como el progreso de las áres y la cantidad de fotos en las áreas, a esta uri se le passa el accomodation_uid, que vendria siendo el identificador de un accomodation
+Gets detailed information about an specific accomodation. These details include **general non accessibility information** about the map, **mapping progress**, **mapping duration**, **mapping dates** and the **mapping progress detailed by area**. The accommodation_uid is passed as a param to specify the accommodation that will be queried.
 
 **URL:** `https://apidash2.herokuapp.com/maps/detail/{accomodation_uid}`
 
@@ -230,7 +231,7 @@ Description: Obtiene información detallada de un accomodation en espécifico, t
 
 
 ### Mappers overview
-Description: Obtiene la lista completa de los mappers, en este caso, los filtros vienen en la URI, como nombre, apellido, el orden y la cantidad de paginas, el ejemplo es los datos que vienen para cada mapper en la lista.
+Gets all mappers list with basic information such as **name**, **profile picture**, **completed maps**, **in progress maps** and **contact email**. Params are passed in the URI to apply sorting and search by name.
 
 **URL:** `https://apidash2.herokuapp.com/mappers/overview?:maps?:nombre?:apellido?:order?:page?`
 
@@ -272,7 +273,7 @@ Description: Obtiene la lista completa de los mappers, en este caso, los filtros
 
 
 ### Mapper details
-Description: El {id} es reemplazado por el id que tiene un mapper, con esto la API nos regresara la información específica de un mapper, asi como sus contrubuciones, la ultima vez que contesto algo, la ultima área mapeada, y lo más improtante, sus contribuciones pendientes y en procceso.
+Gets detailed information about an specific mapper by giving its id as a param. Information includes **name**, **contributions statistics**, and **last activity**.
 
 **URL:** `https://apidash2.herokuapp.com/mappers/details/{id}`
 
@@ -316,14 +317,14 @@ Description: El {id} es reemplazado por el id que tiene un mapper, con esto la A
 
 
 ### Mapper Contributions
-Description: Obtiene la información de todos los accomodations que fueron mapeados por el mapper dado el id de un mapper {id} el body que recibe se puede decir que es una form de los filtros aplicados.
+Gets all the accommodations associated to an speciffic mapper affected by filters. It is used as a POST method to be able to send filter data according to the expected body explained below. It returns the **accommodations name**, **city** and **total progress**.
 
 **URL:** `https://apidash2.herokuapp.com/mappers/contributions/{id}`
 
 **Method:** `POST`
 
 **Expected Body**
-Como body recibe los parámetros de los filtros, en country recibe las ciudades a filtrar dentro del arreglo de igual manera en cities un arreglo con todas las ciudades a filtrar, y el filter una palabra clave ya sea complete o non-complete para el filtro de completados o no.
+As a JSON body, it is needed to send an object with three properties inside: an array of countries, an array of cities and a string that can be "complete"/"non-complete".
 
 ```json
 {
@@ -356,7 +357,7 @@ Como body recibe los parámetros de los filtros, en country recibe las ciudades 
 
 
 ### Countries & Cities List
-Description: Obtiene las ciudades y los paises que se encuentran en la base de datos, los cuales son utilizados para la información de los filtros.
+Gets a list of all the cities and countries available in the database to apply filters according to these arrays.
 
 **URL:** `https://apidash2.herokuapp.com/mappers/countries`
 
