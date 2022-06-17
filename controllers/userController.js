@@ -49,6 +49,12 @@ module.exports.List = (request, response) => {
   }
 
   connection.query(sql, (error, rows) => {
+    if (error) {
+      if (error.code === "ER_BAD_FIELD_ERROR") {
+        return response.status(400).json("Bad request");
+      }
+      response.send(error);
+    }
     try {
       let obj = [{}];
       if (rows == "") {
@@ -82,87 +88,88 @@ module.exports.List = (request, response) => {
 //MAPPERS CONTRIBUTIONS TABLE
 module.exports.Table = (request, response) => {
   //URI format -> http://localhost:9000/mappers/contributions/2?page&=3
+  try {
+    var sql = ``;
+    var userId = request.params.id;
+    var body = request.body;
+    //var page = request.params.page * 5;
 
-  var sql = ``;
-  var userId = request.params.id;
-  var body = request.body;
-  //var page = request.params.page * 5;
+    var filter = "";
+    if (body.filter == "complete") {
+      filter = " and completed_at IS NOT NULL";
+    } else if (body.filter == "non-complete") {
+      filter = " and completed_at IS NULL";
+    }
 
-  var filter = "";
-  if (body.filter == "complete") {
-    filter = " and completed_at IS NOT NULL";
-  } else if (body.filter == "non-complete") {
-    filter = " and completed_at IS NULL";
-  }
-
-  if (body.countries.length == 0 && body.cities.length == 0) {
-    sql += `SELECT a.total ,a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
+    if (body.countries.length == 0 && body.cities.length == 0) {
+      sql += `SELECT a.total ,a.accommodation_uid as ACC_ID, NAME, a.CITY, country_name 
             FROM ams_dashboard_accommodations a join ams_dashboard_users b
             on user_uid = b.uid
             where b.id = ${userId}
             ${filter}
             `;
-    //limit 5 offset ${page}
-    //`;
-  } else if (
-    (body.countries.length > 0 && body.cities.length == 0) ||
-    (body.countries.length > 0 && body.cities.length > 0)
-  ) {
-    for (let i = 0; i < body.countries.length; i++) {
-      if (i == body.countries.length - 1) {
-        sql += `select distinct a.total, a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
-                from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+      //limit 5 offset ${page}
+      //`;
+    } else if (
+      (body.countries.length > 0 && body.cities.length == 0) ||
+      (body.countries.length > 0 && body.cities.length > 0)
+    ) {
+      for (let i = 0; i < body.countries.length; i++) {
+        if (i == body.countries.length - 1) {
+          sql += `select distinct a.total, a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+          from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
                 where u.id= ${userId} and country_name = '${body.countries[i]}' ${filter}
                 order by(r.UPDATED_AT)`;
-      } else {
-        sql += `select distinct a.total , a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+        } else {
+          sql += `select distinct a.total , a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
                 from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
                 where u.id= ${userId} and country_name = '${body.countries[i]}' ${filter}
                 order by(r.UPDATED_AT) union`;
+        }
       }
-    }
-  } else if (body.countries.length == 0 && body.cities.length > 0) {
-    for (let i = 0; i < body.cities.length; i++) {
-      if (i == body.cities.length - 1) {
-        sql += `select distinct a.total , a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
-                from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
-                join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
-                where u.id= ${userId} and a.CITY = '${body.cities[i]}' ${filter}
-                order by(r.UPDATED_AT)`;
-      } else {
-        sql += `select distinct a.total ,a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
-                from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+    } else if (body.countries.length == 0 && body.cities.length > 0) {
+      for (let i = 0; i < body.cities.length; i++) {
+        if (i == body.cities.length - 1) {
+          sql += `select distinct a.total , a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+        from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
+        join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
+        where u.id= ${userId} and a.CITY = '${body.cities[i]}' ${filter}
+        order by(r.UPDATED_AT)`;
+        } else {
+          sql += `select distinct a.total ,a.accommodation_uid as ACC_ID, u.ID, a.NAME, r.UPDATED_AT, ADDRESS, a.country_name, a.CITY
+        from ams_dashboard_users u join ams_dashboard_accommodations a on u.UID=a.USER_UID
                 join ams_dashboard_replies r on r.ACCOMMODATION_UID=a.accommodation_uid
                 where u.id= ${userId} and a.CITY ='${body.cities[i]}' ${filter}
                 order by(r.UPDATED_AT) union`;
+        }
       }
     }
-  }
-  try {
     connection.query(sql, (error, rows) => {
-      if (error) response.send(error);
-
-      let obj = [{}];
-      if (rows == "") {
-        response.status(404).json("No matches found");
-      } else {
-        for (let x = 0; x < rows.length; x++) {
-          obj[x] = {
-            id: rows[x].ACC_ID,
-            placeName: rows[x].NAME,
-            city: `${rows[x].CITY}, ${rows[x].country_name}`,
-            progress: Math.round(rows[x].total * 100),
-          };
+      if (error) {
+        if (error.code === "ER_BAD_FIELD_ERROR") {
+          return response.status(400).json("Bad request");
         }
-        rows == ""
-          ? response.status(404).json("No matches found")
-          : response.json(obj);
+        response.send(error);
       }
+      let places = [{}];
+      for (let x = 0; x < rows.length; x++) {
+        places[x] = {
+          id: rows[x].ACC_ID,
+          placeName: rows[x].NAME,
+          city: `${rows[x].city}, ${rows[x].country_name}`,
+          progress: Math.round(rows[x].total * 100),
+        };
+      }
+      response.json(places);
     });
   } catch (error) {
-    return response.status(400).json("Bad request");
+    console.log(error);
+    return response.status(500).json({
+      type: "Error en el servidor",
+      message: error,
+    });
   }
 };
 
@@ -192,9 +199,7 @@ module.exports.Details = (request, response) => {
       connection.query(sql2, (error, rows1) => {
         if (error) {
           if (error.code === "ER_BAD_FIELD_ERROR") {
-            return response
-              .status(400)
-              .json("Bad request");
+            return response.status(400).json("Bad request");
           }
           response.send(error);
         }
@@ -282,7 +287,12 @@ module.exports.Countries = (request, response) => {
   try {
     connection.query(sql2, (error, rows1) => {
       connection.query(sql, (error, rows) => {
-        if (error) response.send(error);
+        if (error) {
+          if (error.code === "ER_BAD_FIELD_ERROR") {
+            return response.status(400).json("Bad request");
+          }
+          response.send(error);
+        }
         if (rows == "" || rows1 == "") {
           return response
             .status(404)
