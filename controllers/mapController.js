@@ -209,10 +209,15 @@ module.exports.Detail = (request,response) => {
                         }
                         var last = ""
                         var days = 0
+                        if (rows[0][0].completed_at == null) {
+                            days = moment().diff((rows[0][0].created_at),'days')
+                        }
+
                         if (rows[0][0].completed_at != null) {
                             last = rows[0][0].completed_at
                             
-                        }else if(rows[0][0].completed_at == null && rows[1][0] !== undefined ){
+                        }
+                        else if(rows[0][0].completed_at == null && rows[1][0] !== undefined ){
                             if (rows[1][0].completed_at != null) {
                                 last = rows[1][0].completed_at
                             }else{
@@ -230,13 +235,6 @@ module.exports.Detail = (request,response) => {
                         }
             
                         if(last != "No information"){
-                            days = moment(last).diff(rows[0][0].created_at,'days')
-                            if(days == 0){
-                                days = 1
-                            }
-                        }else{
-                            days = moment().diff((rows[0][0].created_at),'days')
-                            last = rows[0][0].created_at
                             if(days == 0){
                                 days = 1
                             }
