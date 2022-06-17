@@ -5,7 +5,9 @@ An API to manage a straightforward visual tool for WTW people to keep a track on
 ![Wheel The World Logo](https://yt3.ggpht.com/ytc/AKedOLTqfmzzNJXFj_68GOpz6aZDrXKWDXlp_SCpc5Vr=s900-c-k-c0x00ffffff-no-rj)
 
 ## Project demo (integrated with its React App)
-(Insert demo link here).
+▶️ [Watch Full Demo](https://www.loom.com/share/e045c92a5cbd464ea3f3cd7166d1f2b3)
+
+Below is a screenshot of the Database used to query data for this API.
 
 ## Available endpoints (API Documentation)
 
