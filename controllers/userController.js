@@ -158,7 +158,7 @@ module.exports.Table = (request, response) => {
         places[x] = {
           id: rows[x].ACC_ID,
           placeName: rows[x].NAME,
-          city: `${rows[x].city}, ${rows[x].country_name}`,
+          city: `${rows[x].CITY}, ${rows[x].country_name}`,
           progress: Math.round(rows[x].total * 100),
         };
       }
