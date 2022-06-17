@@ -426,8 +426,7 @@ $ npm run dev
 ```
 
 ## Give it a try!
-💻 You can also see our demo live! Just click in this link:
-[https://wtwdashboard.netlify.app/](url)
+💻 You can get access to the API through this link: https://apidash2.herokuapp.com/
 
 
 ## Interesting links
