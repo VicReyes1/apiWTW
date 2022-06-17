@@ -209,37 +209,46 @@ module.exports.Detail = (request,response) => {
                         }
                         var last = ""
                         var days = 0
-                        if (rows[0][0].completed_at != null) {
-                            last = rows[0][0].completed_at
-                            
-                        }else if(rows[0][0].completed_at == null && rows[1][0] !== undefined ){
-                            if (rows[1][0].completed_at != null) {
-                                last = rows[1][0].completed_at
-                            }else{
-                                last = "No information"
-                            }
-                        }
-                        else if(rows[0][0].completed_at == null && (rows[1][0] === undefined ) && (rows[2][0] !== undefined)){
-                            if (rows[2][0].created_at != null) {
-                                last = rows[2][0].created_at
-                            }else{
-                                last = "No information"
+                        if (rows[0][0].completed_at == null) {
+                            if(rows[1][0] !== undefined ){
+                                if (rows[1][0].completed_at != null) {
+                                    last = rows[1][0].completed_at
+                                    days = moment(last).diff((rows[0][0].created_at),'days')
+                                }
+                                else if(rows[1][0] === undefined  && rows[2][0] !== undefined){
+                                    if (rows[2][0].created_at != null) {
+                                        last = rows[2][0].created_at
+                                        days = moment(last).diff((rows[0][0].created_at),'days')
+                                    }else{
+                                        last = "No information"
+                                        days = moment().diff((rows[0][0].created_at),'days')
+                                    }
+                                }else{
+                                    last = "No information"
+                                    days = moment().diff((rows[0][0].created_at),'days')
+                                }
                             }
                         }else{
-                            last = "No information"
+                            last = rows[0][0].completed_at
+                            days = moment(last).diff((rows[0][0].created_at),'days')
                         }
             
                         if(last != "No information"){
-                            days = moment(last).diff(rows[0][0].created_at,'days')
-                            if(days == 0){
-                                days = 1
+                            if(days == 0 && rows[0][0].completed_at == null){
+                                if (last == "") {
+                                    last = rows[0][0].created_at
+                                }
+                                days = moment().diff((rows[0][0].created_at),'days')
+                            }else if(days == 0 && rows[0][0].completed_at != null){
+                                var days2 = moment(rows[0][0].completed_at).diff((rows[0][0].created_at),'days')
+                                if (days2 == 0) {
+                                    days = 1
+                                }else{
+                                    days = days2
+                                }
                             }
                         }else{
                             days = moment().diff((rows[0][0].created_at),'days')
-                            last = rows[0][0].created_at
-                            if(days == 0){
-                                days = 1
-                            }
                         }
             
                         if (rows[0][0].photourl == null) {
