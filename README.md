@@ -10,9 +10,10 @@ An API to manage a straightforward visual tool for WTW people to keep a track on
 Below is a screenshot of the Database used to query data for this API.
 
 ## Available endpoints (API Documentation)
+📄 [See our API Documentation page here](https://sugared-fahrenheit-260.notion.site/WTW-Dashboard-API-Documentation-bca6e2aabb9d4bfda8b9355f726d0490)
 
 ### Maps Overview
-Gets de general overview information, which includes the **completed maps summary** affected by the date picker and all time statistics (not affected by the date). All Time Statistics includes **worldwide data of the organization**, **average number of photos per mapp**, **least mapped areas**, **average completion time** and data to fill the **yearly history graphic**.
+Gets the general overview information, which includes the **completed maps summary** affected by the date picker and all time statistics (not affected by the date). All Time Statistics includes **worldwide data of the organization**, **average number of photos per map**, **least mapped areas**, **average completion time** and data to fill the **yearly history graphic**.
  
 **URL:** `https://apidash2.herokuapp.com/maps/overview/{initalDate}/{finisDate}`
 
@@ -425,8 +426,7 @@ $ npm run dev
 ```
 
 ## Give it a try!
-You can also see our demo live! Just click in this link:
-[https://wtwdashboard.netlify.app/](url)
+💻 You can get access to the API through this link: https://apidash2.herokuapp.com/
 
 
 ## Interesting links
