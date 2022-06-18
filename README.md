@@ -8,6 +8,7 @@ An API to manage a straightforward visual tool for WTW people to keep a track on
 ▶️ [Watch Full Demo](https://www.loom.com/share/e045c92a5cbd464ea3f3cd7166d1f2b3)
 
 Below is a screenshot of the Database used to query data for this API.
+![image](https://user-images.githubusercontent.com/72992434/174418633-4301e110-2151-4670-b14b-309e82e5e3fa.png)
 
 ## Available endpoints (API Documentation)
 📄 [See our API Documentation page here](https://sugared-fahrenheit-260.notion.site/WTW-Dashboard-API-Documentation-bca6e2aabb9d4bfda8b9355f726d0490)
