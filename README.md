@@ -1,20 +1,20 @@
 # Dashboard Wheel The World
 
-An API to manage a straightforward visual tool for WTW people to keep a track on the maps and mappers' insights (related to Places to Stay), built using ExpressJS.
+An API to manage a straightforward visual tool for WTW people to keep track of the maps and mappers' insights (related to Places to Stay), built using ExpressJS.
 
 ![Wheel The World Logo](https://yt3.ggpht.com/ytc/AKedOLTqfmzzNJXFj_68GOpz6aZDrXKWDXlp_SCpc5Vr=s900-c-k-c0x00ffffff-no-rj)
 
 ## Project demo (integrated with its React App)
 ▶️ [Watch Full Demo](https://www.loom.com/share/e045c92a5cbd464ea3f3cd7166d1f2b3)
 
-Below is a screenshot of the Database used to query data for this API.
+Below is a screenshot of the database used to query data for this API.
 ![image](https://user-images.githubusercontent.com/72992434/174418633-4301e110-2151-4670-b14b-309e82e5e3fa.png)
 
 ## Available endpoints (API Documentation)
 📄 [See our API Documentation page here](https://sugared-fahrenheit-260.notion.site/WTW-Dashboard-API-Documentation-bca6e2aabb9d4bfda8b9355f726d0490)
 
 ### Maps Overview
-Gets the general overview information, which includes the **completed maps summary** affected by the date picker and all time statistics (not affected by the date). All Time Statistics includes **worldwide data of the organization**, **average number of photos per map**, **least mapped areas**, **average completion time** and data to fill the **yearly history graphic**.
+Gets the general overview information, including the **completed maps summary,** affected by the date picker, and all-time statistics (not affected by the date). All Time Statistics includes **worldwide data of the organization**, **average number of photos per map**, **least mapped areas**, **average completion time**, and data to fill the **yearly history graphic**.
  
 **URL:** `https://apidash2.herokuapp.com/maps/overview/{initalDate}/{finisDate}`
 
@@ -120,7 +120,7 @@ Gets the general overview information, which includes the **completed maps summa
  
 
 ### Maps Table
-Gets all the accommodations list affected by the date picker(:initialDate & :finishDate) and other filters. It is used as a POST method to be able to send filter data according to the expected body explained below.
+Displays the accommodations list; users can filter the list by initial date, end date, and other filters. Choosing a filter makes a POST request to the API, with a payload as explained below.
 
 **URL:** `https://apidash2.herokuapp.com/maps/table/{initialDate}/{finishDate}`
 
@@ -128,7 +128,7 @@ Gets all the accommodations list affected by the date picker(:initialDate & :fin
 
  **Expected Body**
  
-As a JSON body, it is needed to send an object with three properties inside: an array of countries, an array of cities and a string that can be "complete"/"non-complete"
+The payload should be a JSON object with these properties: an array of countries; an array of cities; and a string that can be "complete"/"non-complete."
   
   ```json 
   {
@@ -152,7 +152,7 @@ As a JSON body, it is needed to send an object with three properties inside: an 
 
 
 ### Map Details
-Gets detailed information about an specific accomodation. These details include **general non accessibility information** about the map, **mapping progress**, **mapping duration**, **mapping dates** and the **mapping progress detailed by area**. The accommodation_uid is passed as a param to specify the accommodation that will be queried.
+Gets detailed information about a specific accommodation. These details include **general non-accessibility information** about the map, **mapping progress**, **mapping duration**, **mapping dates**, and the **mapping progress detailed by area**. The accommodation_uid is passed as a param to specify the accommodation that will be queried.
 
 **URL:** `https://apidash2.herokuapp.com/maps/detail/{accomodation_uid}`
 
@@ -275,7 +275,7 @@ Gets all mappers list with basic information such as **name**, **profile picture
 
 
 ### Mapper details
-Gets detailed information about an specific mapper by giving its id as a param. Information includes **name**, **contributions statistics**, and **last activity**.
+Gets detailed information about a specific mapper by giving its id as a param. Information includes **name**, **contributions statistics**, and **last activity**.
 
 **URL:** `https://apidash2.herokuapp.com/mappers/details/{id}`
 
@@ -319,14 +319,14 @@ Gets detailed information about an specific mapper by giving its id as a param. 
 
 
 ### Mapper Contributions
-Gets all the accommodations associated to an speciffic mapper affected by filters. It is used as a POST method to be able to send filter data according to the expected body explained below. It returns the **accommodations name**, **city** and **total progress**.
+Gets all the accommodations associated with a specific mapper affected by filters. Choosing a filter makes a POST request to the API, with a payload as explained below. It returns the **accommodations name**, **city**, and **total progress**.
 
 **URL:** `https://apidash2.herokuapp.com/mappers/contributions/{id}`
 
 **Method:** `POST`
 
 **Expected Body**
-As a JSON body, it is needed to send an object with three properties inside: an array of countries, an array of cities and a string that can be "complete"/"non-complete".
+The payload should be a JSON object with these properties: an array of countries; an array of cities; and a string that can be "complete"/"non-complete."
 
 ```json
 {
@@ -359,7 +359,7 @@ As a JSON body, it is needed to send an object with three properties inside: an 
 
 
 ### Countries & Cities List
-Gets a list of all the cities and countries available in the database to apply filters according to these arrays.
+Gets a list of all the cities and countries available in the database. These catalogs will appear as filters on tables.
 
 **URL:** `https://apidash2.herokuapp.com/mappers/countries`
 
@@ -406,7 +406,7 @@ $ cd apiWTW
 $ npm i
 ```
 
-- To properly run this project, you'll need to authenticate users by using Firebase. We invite you to add an .env file manually in the root directory. Firstly, create your own firebase project and its database. Inside that .env file, add the following line:
+- To properly run this project, authenticate users by using Firebase. Firstly, create a firebase project and its database. Then add a .env file manually in the root directory. Inside that .env file, add the following line:
 ```
 REACT_APP_ACCESS_KEY = {your access key here, without spaces, formatted in just one line}
 ```
@@ -427,16 +427,16 @@ $ npm run dev
 ```
 
 ## Give it a try!
-💻 You can get access to the API through this link: https://apidash2.herokuapp.com/
+💻 Get access to the API through this link: https://apidash2.herokuapp.com/
 
 
 ## Interesting links
 - Wheel the World Website:
-[https://wheeltheworld.com/](url)
+[https://wheeltheworld.com/](URL)
 - About Wheel the World:
-[https://wheeltheworld.com/about-us](url)
+[https://wheeltheworld.com/about-us](URL)
 - Frontend Repository:
-[https://github.com/EmmanuelBoM/dashWTW](url)
+[https://github.com/EmmanuelBoM/dashWTW](URL)
 
 
 ## Contributors
@@ -445,4 +445,3 @@ $ npm run dev
 - Edgar Daniel Acosta Rosales @DonKatsun
 - Diana Guadalupe García Aguirre @DianaA96
 - Emmanuel Bolteada Manzo @EmmanuelBoM
-
